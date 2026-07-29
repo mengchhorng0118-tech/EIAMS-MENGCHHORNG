@@ -36,6 +36,8 @@ DEBUG = False
 # ALLOWED_HOSTS = ['*']  # Restrict to specific domain in production
 ALLOWED_HOSTS = [
     ".onrender.com",
+    "localhost",
+    "127.0.0.1",
 ]
 # ============================================================
 # INSTALLED APPLICATIONS
@@ -70,6 +72,7 @@ INSTALLED_APPS = [
 # ============================================================
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',          # i18n language detection
     'django.middleware.common.CommonMiddleware',
@@ -184,12 +187,19 @@ LOCALE_PATHS = [
 # ============================================================
 # STATIC FILES (CSS, JavaScript, Images)
 # ============================================================
+# STATIC_URL = '/static/'
+# STATICFILES_DIRS = [
+#     BASE_DIR / 'static',  # Development static files
+# ]
+# STATIC_ROOT = BASE_DIR / 'staticfiles'  # Production static files (collectstatic)
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [
-    BASE_DIR / 'static',  # Development static files
-]
-STATIC_ROOT = BASE_DIR / 'staticfiles'  # Production static files (collectstatic)
 
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',
+]
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # ============================================================
 # MEDIA FILES (User Uploads)
 # ============================================================
