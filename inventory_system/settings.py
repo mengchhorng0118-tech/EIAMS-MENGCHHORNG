@@ -29,11 +29,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-eiams-secret-key-change-in-production-biu-sad-2026'
 
 # SECURITY WARNING: Don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
+
 
 # Hosts allowed to serve this application
-ALLOWED_HOSTS = ['*']  # Restrict to specific domain in production
-
+# ALLOWED_HOSTS = ['*']  # Restrict to specific domain in production
+ALLOWED_HOSTS = [
+    ".onrender.com",
+]
 # ============================================================
 # INSTALLED APPLICATIONS
 # ============================================================
