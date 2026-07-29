@@ -1,0 +1,618 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome to EIAMS | Enterprise Inventory & Asset Management</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* ── Reset & Base ──────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; font-family: 'Inter', sans-serif; }
+
+/* ── Slide wrapper ─────────────────────────────────────────── */
+.slides-container {
+  position: fixed; inset: 0;
+  background: #0f172a;
+}
+.slide {
+  position: absolute; inset: 0;
+  display: flex;
+  opacity: 0;
+  transition: opacity .7s cubic-bezier(.4,0,.2,1), transform .7s cubic-bezier(.4,0,.2,1);
+  transform: translateX(60px);
+  pointer-events: none;
+}
+.slide.active {
+  opacity: 1; transform: translateX(0); pointer-events: auto;
+}
+.slide.exit {
+  opacity: 0; transform: translateX(-60px);
+}
+
+/* ── Left panel (visual) ───────────────────────────────────── */
+.slide-visual {
+  width: 55%;
+  display: flex; align-items: center; justify-content: center;
+  position: relative; overflow: hidden;
+  flex-shrink: 0;
+}
+.slide-visual .bg-glow {
+  position: absolute; inset: 0;
+  background: var(--grad);
+  opacity: .9;
+}
+.slide-visual .pattern {
+  position: absolute; inset: 0;
+  background-image: radial-gradient(rgba(255,255,255,.08) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+/* ── Right panel (content) ─────────────────────────────────── */
+.slide-content {
+  flex: 1;
+  background: #0f172a;
+  display: flex; flex-direction: column;
+  justify-content: center;
+  padding: 3rem 3.5rem;
+}
+.slide-tag {
+  font-size: .65rem; font-weight: 700; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--accent);
+  margin-bottom: .6rem;
+  display: flex; align-items: center; gap: .5rem;
+}
+.slide-tag::before {
+  content: ''; width: 24px; height: 2px; background: var(--accent); border-radius: 99px;
+}
+.slide-title {
+  font-size: 2rem; font-weight: 800; color: #f8fafc;
+  line-height: 1.2; letter-spacing: -.04em; margin-bottom: .75rem;
+}
+.slide-title span { color: var(--accent); }
+.slide-desc {
+  font-size: .9rem; color: #94a3b8; line-height: 1.65;
+  max-width: 380px; margin-bottom: 1.5rem;
+}
+.feature-list {
+  list-style: none; display: flex; flex-direction: column; gap: .5rem; margin-bottom: 2rem;
+}
+.feature-list li {
+  display: flex; align-items: center; gap: .65rem;
+  font-size: .8rem; color: #cbd5e1;
+}
+.feature-list li i {
+  width: 26px; height: 26px; border-radius: 6px;
+  background: rgba(255,255,255,.07);
+  display: flex; align-items: center; justify-content: center;
+  font-size: .8rem; color: var(--accent); flex-shrink: 0;
+}
+
+/* ── Big icon / mockup in visual panel ─────────────────────── */
+.hero-icon-wrap {
+  position: relative; z-index: 1;
+  display: flex; align-items: center; justify-content: center;
+}
+.hero-icon-ring {
+  width: 180px; height: 180px; border-radius: 50%;
+  background: rgba(255,255,255,.1);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 0 30px rgba(255,255,255,.04), 0 0 0 60px rgba(255,255,255,.02);
+  animation: pulse-ring 3s infinite;
+}
+.hero-icon-ring i { font-size: 5rem; color: #fff; }
+@keyframes pulse-ring {
+  0%   { box-shadow: 0 0 0 0   rgba(255,255,255,.15), 0 0 0 30px rgba(255,255,255,.05); }
+  50%  { box-shadow: 0 0 0 30px rgba(255,255,255,.05), 0 0 0 60px rgba(255,255,255,.02); }
+  100% { box-shadow: 0 0 0 0   rgba(255,255,255,.15), 0 0 0 30px rgba(255,255,255,.05); }
+}
+
+/* Floating stat cards on the visual side */
+.float-card {
+  position: absolute; background: rgba(255,255,255,.12);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 12px; padding: .7rem 1rem;
+  color: #fff; font-size: .72rem; font-weight: 600;
+  animation: float-updown 4s ease-in-out infinite;
+  z-index: 2;
+}
+.float-card .fc-val { font-size: 1.3rem; font-weight: 800; line-height: 1; }
+.float-card.fc-1 { top: 18%; left: 8%;  animation-delay: 0s; }
+.float-card.fc-2 { top: 22%; right: 8%; animation-delay: .8s; }
+.float-card.fc-3 { bottom: 22%; left: 8%; animation-delay: 1.4s; }
+.float-card.fc-4 { bottom: 16%; right: 8%; animation-delay: .4s; }
+@keyframes float-updown {
+  0%,100% { transform: translateY(0); }
+  50%      { transform: translateY(-10px); }
+}
+
+/* ── Bottom nav ────────────────────────────────────────────── */
+.intro-nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1.1rem 2.5rem;
+  background: rgba(15,23,42,.85);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(255,255,255,.07);
+  z-index: 100;
+}
+.dots { display: flex; gap: .5rem; }
+.dot {
+  width: 28px; height: 4px; border-radius: 99px;
+  background: rgba(255,255,255,.2);
+  cursor: pointer; transition: all .3s;
+}
+.dot.active { background: var(--current-accent, #2563eb); width: 40px; }
+
+.btn-intro-login {
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  color: #fff; border: none; border-radius: 10px;
+  padding: .65rem 1.75rem; font-size: .88rem; font-weight: 700;
+  cursor: pointer; transition: all .2s;
+  display: flex; align-items: center; gap: .5rem;
+  box-shadow: 0 4px 16px rgba(37,99,235,.4);
+}
+.btn-intro-login:hover {
+  transform: translateY(-2px); box-shadow: 0 8px 24px rgba(37,99,235,.5);
+}
+.btn-intro-next {
+  background: rgba(255,255,255,.1); color: #f1f5f9;
+  border: 1px solid rgba(255,255,255,.2); border-radius: 10px;
+  padding: .65rem 1.4rem; font-size: .88rem; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+  display: flex; align-items: center; gap: .5rem;
+}
+.btn-intro-next:hover { background: rgba(255,255,255,.18); }
+
+/* ── Top bar ─────────────────────────────────────────────────── */
+.intro-topbar {
+  position: fixed; top: 0; left: 0; right: 0;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1rem 2.5rem;
+  z-index: 100;
+}
+.intro-brand {
+  display: flex; align-items: center; gap: .6rem;
+}
+.intro-brand-icon {
+  width: 34px; height: 34px; border-radius: 8px;
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 1rem;
+}
+.intro-brand-text { color: #f8fafc; font-weight: 700; font-size: .95rem; }
+.intro-brand-sub  { color: #64748b; font-size: .65rem; }
+.btn-skip {
+  color: #64748b; background: none; border: none;
+  font-size: .78rem; cursor: pointer; transition: color .2s;
+  padding: .4rem .8rem; border-radius: 6px;
+}
+.btn-skip:hover { color: #94a3b8; background: rgba(255,255,255,.06); }
+
+/* ── Progress bar ──────────────────────────────────────────── */
+.auto-progress-bar {
+  position: fixed; top: 0; left: 0;
+  height: 3px; background: linear-gradient(90deg, #2563eb, #7c3aed);
+  z-index: 200; transition: width .1s linear;
+}
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .slide { flex-direction: column; }
+  .slide-visual { width: 100%; height: 40%; }
+  .slide-content { padding: 1.5rem 1.75rem; justify-content: flex-start; }
+  .slide-title { font-size: 1.45rem; }
+  .float-card { display: none; }
+  .hero-icon-ring { width: 120px; height: 120px; }
+  .hero-icon-ring i { font-size: 3rem; }
+}
+@media (max-width: 576px) {
+  .slide-content { padding: 1rem 1.25rem; }
+  .intro-nav { padding: .8rem 1.2rem; }
+  .slide-title { font-size: 1.2rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- Auto progress bar -->
+<div class="auto-progress-bar" id="progressBar" style="width:0%"></div>
+
+<!-- Top bar -->
+<div class="intro-topbar">
+  <div class="intro-brand">
+    <div class="intro-brand-icon"><i class="bi bi-boxes"></i></div>
+    <div>
+      <div class="intro-brand-text">EIAMS</div>
+      <div class="intro-brand-sub">Enterprise Inventory &amp; Assets</div>
+    </div>
+  </div>
+  <a href="{% url 'accounts:login' %}" class="btn-skip">
+    Skip intro <i class="bi bi-skip-end ms-1"></i>
+  </a>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     SLIDES
+════════════════════════════════════════════════════════════ -->
+<div class="slides-container" id="slidesContainer">
+
+  <!-- ── SLIDE 1: Welcome ──────────────────────────────────── -->
+  <div class="slide active" data-accent="#2563eb" style="--accent:#2563eb;--grad:linear-gradient(135deg,#1e3a8a 0%,#2563eb 100%);">
+    <div class="slide-visual">
+      <div class="bg-glow"></div>
+      <div class="pattern"></div>
+      <div class="hero-icon-wrap">
+        <div class="hero-icon-ring"><i class="bi bi-boxes"></i></div>
+      </div>
+      <div class="float-card fc-1">
+        <div class="fc-val">1,240</div>
+        <div>Inventory Items</div>
+      </div>
+      <div class="float-card fc-2">
+        <div class="fc-val">386</div>
+        <div>Active Assets</div>
+      </div>
+      <div class="float-card fc-3">
+        <div class="fc-val">99.8%</div>
+        <div>Uptime</div>
+      </div>
+      <div class="float-card fc-4">
+        <div class="fc-val">$128K</div>
+        <div>Tracked Value</div>
+      </div>
+    </div>
+    <div class="slide-content">
+      <div class="slide-tag">Enterprise Platform</div>
+      <h1 class="slide-title">
+        Welcome to<br><span>EIAMS</span>
+      </h1>
+      <p class="slide-desc">
+        A complete Enterprise Inventory &amp; Asset Management System built
+        for organizations that need real-time control, audit trails, and
+        team collaboration in one place.
+      </p>
+      <ul class="feature-list">
+        <li><i class="bi bi-shield-check"></i> Role-based access control (Super Admin → Staff)</li>
+        <li><i class="bi bi-translate"></i> Multi-language support (English + Khmer)</li>
+        <li><i class="bi bi-bar-chart-line"></i> Real-time dashboard &amp; reports</li>
+        <li><i class="bi bi-bell"></i> Automated low-stock alerts</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 2: Inventory Management ─────────────────────── -->
+  <div class="slide" data-accent="#16a34a" style="--accent:#16a34a;--grad:linear-gradient(135deg,#14532d 0%,#16a34a 100%);">
+    <div class="slide-visual">
+      <div class="bg-glow"></div>
+      <div class="pattern"></div>
+      <div class="hero-icon-wrap">
+        <div class="hero-icon-ring"><i class="bi bi-box-seam-fill"></i></div>
+      </div>
+      <div class="float-card fc-1">
+        <div class="fc-val">11</div>
+        <div>Categories</div>
+      </div>
+      <div class="float-card fc-2">
+        <div class="fc-val">9</div>
+        <div>Suppliers</div>
+      </div>
+      <div class="float-card fc-3">
+        <div class="fc-val">Barcode</div>
+        <div>+ QR Codes</div>
+      </div>
+      <div class="float-card fc-4">
+        <div class="fc-val">Auto</div>
+        <div>Stock Alerts</div>
+      </div>
+    </div>
+    <div class="slide-content">
+      <div class="slide-tag">Inventory Control</div>
+      <h1 class="slide-title">
+        Full <span>Inventory</span><br>Control
+      </h1>
+      <p class="slide-desc">
+        Track every item from purchase to depletion. Manage categories,
+        locations, suppliers and automate restocking alerts when stock
+        drops below minimum thresholds.
+      </p>
+      <ul class="feature-list">
+        <li><i class="bi bi-upc-scan"></i> Barcode (Code128) &amp; QR code generation</li>
+        <li><i class="bi bi-arrow-left-right"></i> Stock IN / OUT / Adjustment movements</li>
+        <li><i class="bi bi-geo-alt"></i> Multiple warehouse locations</li>
+        <li><i class="bi bi-truck"></i> Supplier management &amp; tracking</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 3: Asset Management ─────────────────────────── -->
+  <div class="slide" data-accent="#7c3aed" style="--accent:#7c3aed;--grad:linear-gradient(135deg,#4c1d95 0%,#7c3aed 100%);">
+    <div class="slide-visual">
+      <div class="bg-glow"></div>
+      <div class="pattern"></div>
+      <div class="hero-icon-wrap">
+        <div class="hero-icon-ring"><i class="bi bi-pc-display-horizontal"></i></div>
+      </div>
+      <div class="float-card fc-1">
+        <div class="fc-val">Lifecycle</div>
+        <div>Full Tracking</div>
+      </div>
+      <div class="float-card fc-2">
+        <div class="fc-val">Transfer</div>
+        <div>Approval Flow</div>
+      </div>
+      <div class="float-card fc-3">
+        <div class="fc-val">Warranty</div>
+        <div>Auto-Expiry Alert</div>
+      </div>
+      <div class="float-card fc-4">
+        <div class="fc-val">Audit</div>
+        <div>Condition Logs</div>
+      </div>
+    </div>
+    <div class="slide-content">
+      <div class="slide-tag">Asset Lifecycle</div>
+      <h1 class="slide-title">
+        Manage Every<br><span>Asset</span> You Own
+      </h1>
+      <p class="slide-desc">
+        From procurement to disposal — track every physical asset's
+        location, condition, assignments, maintenance history and
+        warranty status in real time.
+      </p>
+      <ul class="feature-list">
+        <li><i class="bi bi-arrow-repeat"></i> Asset transfers with approval workflow</li>
+        <li><i class="bi bi-tools"></i> Preventive &amp; corrective maintenance logs</li>
+        <li><i class="bi bi-shield-exclamation"></i> Warranty expiry alerts (60-day advance)</li>
+        <li><i class="bi bi-trash3"></i> Formal disposal approval process</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 4: Reports & Dashboard ─────────────────────── -->
+  <div class="slide" data-accent="#0891b2" style="--accent:#0891b2;--grad:linear-gradient(135deg,#164e63 0%,#0891b2 100%);">
+    <div class="slide-visual">
+      <div class="bg-glow"></div>
+      <div class="pattern"></div>
+      <div class="hero-icon-wrap">
+        <div class="hero-icon-ring"><i class="bi bi-bar-chart-fill"></i></div>
+      </div>
+      <div class="float-card fc-1">
+        <div class="fc-val">PDF</div>
+        <div>Export Reports</div>
+      </div>
+      <div class="float-card fc-2">
+        <div class="fc-val">Excel</div>
+        <div>Data Export</div>
+      </div>
+      <div class="float-card fc-3">
+        <div class="fc-val">Live</div>
+        <div>KPI Cards</div>
+      </div>
+      <div class="float-card fc-4">
+        <div class="fc-val">Charts</div>
+        <div>7-Day Activity</div>
+      </div>
+    </div>
+    <div class="slide-content">
+      <div class="slide-tag">Analytics &amp; Reports</div>
+      <h1 class="slide-title">
+        Insights at a<br><span>Glance</span>
+      </h1>
+      <p class="slide-desc">
+        A premium real-time dashboard shows KPIs, stock trends, asset
+        status and alerts the moment you log in. Export any report to
+        PDF or Excel with one click.
+      </p>
+      <ul class="feature-list">
+        <li><i class="bi bi-speedometer2"></i> Live dashboard — no scrolling required</li>
+        <li><i class="bi bi-file-earmark-pdf"></i> PDF &amp; Excel report export</li>
+        <li><i class="bi bi-graph-up"></i> 7-day stock activity chart</li>
+        <li><i class="bi bi-pie-chart"></i> Category distribution analysis</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 5: Get Started ───────────────────────────────── -->
+  <div class="slide" data-accent="#ea580c" style="--accent:#ea580c;--grad:linear-gradient(135deg,#1e3a8a 0%,#2563eb 50%,#7c3aed 100%);">
+    <div class="slide-visual">
+      <div class="bg-glow"></div>
+      <div class="pattern"></div>
+      <div class="hero-icon-wrap">
+        <div class="hero-icon-ring"><i class="bi bi-rocket-takeoff-fill"></i></div>
+      </div>
+      <div class="float-card fc-1">
+        <div class="fc-val">v1.0.0</div>
+        <div>BIU Y3S1IT</div>
+      </div>
+      <div class="float-card fc-2">
+        <div class="fc-val">Django</div>
+        <div>4.2 + Bootstrap 5</div>
+      </div>
+      <div class="float-card fc-3">
+        <div class="fc-val">4 Roles</div>
+        <div>Access Levels</div>
+      </div>
+      <div class="float-card fc-4">
+        <div class="fc-val">2 Lang</div>
+        <div>EN + KM</div>
+      </div>
+    </div>
+    <div class="slide-content">
+      <div class="slide-tag">Ready to Start</div>
+      <h1 class="slide-title">
+        Your System<br><span>Awaits</span>
+      </h1>
+      <p class="slide-desc">
+        EIAMS is fully operational. Sign in with your credentials to access
+        the dashboard and start managing your inventory and assets with confidence.
+      </p>
+      <ul class="feature-list">
+        <li><i class="bi bi-person-badge"></i> 4 roles: Super Admin, Admin, Manager, Staff</li>
+        <li><i class="bi bi-lock"></i> Secure session management</li>
+        <li><i class="bi bi-phone"></i> Responsive on desktop &amp; mobile</li>
+        <li><i class="bi bi-translate"></i> English &amp; Khmer language support</li>
+      </ul>
+      <a href="{% url 'accounts:login' %}" class="btn-intro-login mt-2" style="display:inline-flex;text-decoration:none;width:fit-content;">
+        <i class="bi bi-box-arrow-in-right"></i>
+        Sign In to EIAMS
+      </a>
+    </div>
+  </div>
+
+</div><!-- /slides-container -->
+
+<!-- Bottom nav -->
+<div class="intro-nav" id="introNav">
+  <div class="dots" id="dotsContainer" role="tablist" aria-label="Slide navigation">
+    <div class="dot active" data-slide="0" role="tab" aria-selected="true" tabindex="0" aria-label="Slide 1"></div>
+    <div class="dot"        data-slide="1" role="tab" aria-selected="false" tabindex="-1" aria-label="Slide 2"></div>
+    <div class="dot"        data-slide="2" role="tab" aria-selected="false" tabindex="-1" aria-label="Slide 3"></div>
+    <div class="dot"        data-slide="3" role="tab" aria-selected="false" tabindex="-1" aria-label="Slide 4"></div>
+    <div class="dot"        data-slide="4" role="tab" aria-selected="false" tabindex="-1" aria-label="Slide 5"></div>
+  </div>
+  <div class="d-flex align-items-center gap-2">
+    <span id="slideCounter" style="font-size:.72rem;color:#475569;">1 / 5</span>
+    <button class="btn-intro-next" id="btnNext" aria-label="Next slide">
+      Next <i class="bi bi-arrow-right"></i>
+    </button>
+    <a href="{% url 'accounts:login' %}" class="btn-intro-login" id="btnLogin" style="display:none;text-decoration:none;">
+      <i class="bi bi-box-arrow-in-right"></i> Sign In
+    </a>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  const slides      = document.querySelectorAll('.slide');
+  const dots        = document.querySelectorAll('.dot');
+  const btnNext     = document.getElementById('btnNext');
+  const btnLogin    = document.getElementById('btnLogin');
+  const progressBar = document.getElementById('progressBar');
+  const counter     = document.getElementById('slideCounter');
+  const TOTAL       = slides.length;
+  const AUTO_MS     = 6000;   // 6 s per slide
+
+  let current      = 0;
+  let autoTimer    = null;
+  let progressTimer = null;
+  let progressStart = null;
+
+  /* ── Accent colour tracking ─────────────────────────────── */
+  function setAccent(slide) {
+    const accent = slide.dataset.accent || '#2563eb';
+    document.documentElement.style.setProperty('--current-accent', accent);
+  }
+
+  /* ── Go to slide ─────────────────────────────────────────── */
+  function goTo(index) {
+    if (index === current) return;
+
+    slides[current].classList.remove('active');
+    slides[current].classList.add('exit');
+
+    const prev = current;
+    current    = ((index % TOTAL) + TOTAL) % TOTAL;
+
+    setTimeout(() => slides[prev].classList.remove('exit'), 700);
+
+    slides[current].classList.add('active');
+    setAccent(slides[current]);
+
+    // Dots
+    dots.forEach((d, i) => {
+      d.classList.toggle('active', i === current);
+      d.setAttribute('aria-selected', i === current ? 'true' : 'false');
+    });
+
+    // Counter
+    counter.textContent = `${current + 1} / ${TOTAL}`;
+
+    // Last slide → show Login, hide Next
+    if (current === TOTAL - 1) {
+      btnNext.style.display  = 'none';
+      btnLogin.style.display = 'flex';
+    } else {
+      btnNext.style.display  = 'flex';
+      btnLogin.style.display = 'none';
+    }
+
+    resetAutoTimer();
+  }
+
+  /* ── Auto-advance with progress bar ─────────────────────── */
+  function startProgress() {
+    progressStart = performance.now();
+    if (progressTimer) cancelAnimationFrame(progressTimer);
+
+    function tick(now) {
+      const elapsed = now - progressStart;
+      const pct     = Math.min((elapsed / AUTO_MS) * 100, 100);
+      progressBar.style.width = pct + '%';
+      if (pct < 100) {
+        progressTimer = requestAnimationFrame(tick);
+      }
+    }
+    progressTimer = requestAnimationFrame(tick);
+  }
+
+  function resetAutoTimer() {
+    if (autoTimer) clearTimeout(autoTimer);
+    if (progressTimer) cancelAnimationFrame(progressTimer);
+    progressBar.style.width = '0%';
+    startProgress();
+
+    if (current < TOTAL - 1) {
+      autoTimer = setTimeout(() => goTo(current + 1), AUTO_MS);
+    }
+  }
+
+  /* ── Dot click ───────────────────────────────────────────── */
+  dots.forEach(d => {
+    d.addEventListener('click', () => goTo(parseInt(d.dataset.slide)));
+    d.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        goTo(parseInt(d.dataset.slide));
+      }
+    });
+  });
+
+  /* ── Next button ─────────────────────────────────────────── */
+  btnNext.addEventListener('click', () => goTo(current + 1));
+
+  /* ── Keyboard navigation ─────────────────────────────────── */
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') goTo(current + 1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   goTo(current - 1);
+    if (e.key === 'Escape')
+      window.location.href = '{% url "accounts:login" %}';
+  });
+
+  /* ── Touch / swipe ───────────────────────────────────────── */
+  let touchStartX = null;
+  document.addEventListener('touchstart', e => {
+    touchStartX = e.touches[0].clientX;
+  }, { passive: true });
+  document.addEventListener('touchend', e => {
+    if (touchStartX === null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(dx) > 50) goTo(dx < 0 ? current + 1 : current - 1);
+    touchStartX = null;
+  });
+
+  /* ── Boot ────────────────────────────────────────────────── */
+  setAccent(slides[0]);
+  resetAutoTimer();
+
+})();
+</script>
+</body>
+</html>

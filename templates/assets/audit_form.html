@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1><i class="bi bi-clipboard-check me-2 text-primary"></i>{{ page_title }}</h1>
+    <nav aria-label="breadcrumb"><ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{% url 'assets:audit_list' %}">Audit Logs</a></li>
+      <li class="breadcrumb-item active">{{ action }}</li>
+    </ol></nav>
+  </div>
+  <a href="{% url 'assets:audit_list' %}" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i>Back to Audit Logs
+  </a>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-header d-flex align-items-center gap-2">
+        <i class="bi bi-clipboard-data text-primary"></i>
+        <h6 class="mb-0">Asset Audit Details</h6>
+      </div>
+      <div class="card-body">
+        <form method="post" novalidate>
+          {% csrf_token %}
+          <div class="row g-3">
+
+            <div class="col-12">
+              <label class="form-label">Asset <span class="text-danger">*</span></label>
+              {{ form.asset }}
+              {% if form.asset.errors %}
+                <div class="text-danger mt-1" style="font-size:.8rem;">{{ form.asset.errors.0 }}</div>
+              {% endif %}
+              <div class="form-text">Select the asset being audited.</div>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Audit Date <span class="text-danger">*</span></label>
+              {{ form.audit_date }}
+              {% if form.audit_date.errors %}
+                <div class="text-danger mt-1" style="font-size:.8rem;">{{ form.audit_date.errors.0 }}</div>
+              {% endif %}
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Condition Status <span class="text-danger">*</span></label>
+              {{ form.condition_status }}
+              {% if form.condition_status.errors %}
+                <div class="text-danger mt-1" style="font-size:.8rem;">{{ form.condition_status.errors.0 }}</div>
+              {% endif %}
+            </div>
+
+            <div class="col-12">
+              <label class="form-label">Location Found At</label>
+              {{ form.location }}
+              {% if form.location.errors %}
+                <div class="text-danger mt-1" style="font-size:.8rem;">{{ form.location.errors.0 }}</div>
+              {% endif %}
+              <div class="form-text">Optional — leave blank if location is unchanged.</div>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label">Remarks</label>
+              {{ form.remarks }}
+              {% if form.remarks.errors %}
+                <div class="text-danger mt-1" style="font-size:.8rem;">{{ form.remarks.errors.0 }}</div>
+              {% endif %}
+              <div class="form-text">Additional observations about the asset condition.</div>
+            </div>
+
+          </div>
+
+          <div class="mt-4 pt-2 border-top d-flex gap-2">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-check-lg me-1"></i>{{ action }} Audit
+            </button>
+            <a href="{% url 'assets:audit_list' %}" class="btn btn-outline-secondary">
+              <i class="bi bi-x-lg me-1"></i>Cancel
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Condition Guide -->
+    <div class="card mt-3">
+      <div class="card-header"><h6 class="mb-0"><i class="bi bi-info-circle me-2 text-info"></i>Condition Guide</h6></div>
+      <div class="card-body p-0">
+        <table class="table table-sm mb-0">
+          <thead><tr><th>Condition</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge bg-success">Good</span></td><td>Asset is fully functional with no visible damage.</td></tr>
+            <tr><td><span class="badge bg-warning text-dark">Fair</span></td><td>Asset is functional but shows wear; minor repairs may be needed.</td></tr>
+            <tr><td><span class="badge bg-danger">Poor</span></td><td>Asset is damaged or non-functional; major repair or disposal required.</td></tr>
+            <tr><td><span class="badge bg-secondary">Missing</span></td><td>Asset could not be located during audit.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

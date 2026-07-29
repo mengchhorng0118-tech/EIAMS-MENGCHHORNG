@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+{% load humanize i18n %}
+{% block title %}Asset Transfers{% endblock %}
+
+{% block extra_css %}
+<style>
+.transfer-badge { border-radius:99px; padding:.28em .75em; font-size:.68rem; font-weight:700; }
+.stat-mini { text-align:center; padding:.6rem .5rem; }
+.stat-mini .val { font-size:1.4rem; font-weight:800; line-height:1; }
+.stat-mini .lbl { font-size:.62rem; color:#64748b; text-transform:uppercase; letter-spacing:.06em; }
+.tbl-action .btn { padding:3px 8px; font-size:.7rem; }
+.filter-bar { background:#fff; border:1px solid #e8eef5; border-radius:10px; padding:12px 16px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- ── Header ─────────────────────────────────────────────── -->
+<div class="page-header">
+  <div>
+    <h1><i class="bi bi-arrow-repeat me-2 text-primary"></i>Asset Transfers</h1>
+    <nav aria-label="breadcrumb"><ol class="breadcrumb mb-0">
+      <li class="breadcrumb-item"><a href="{% url 'dashboard:home' %}">Dashboard</a></li>
+      <li class="breadcrumb-item active">Transfers</li>
+    </ol></nav>
+  </div>
+  <a href="{% url 'assets:transfer_create' %}" class="btn btn-primary">
+    <i class="bi bi-plus-lg me-1"></i>New Transfer
+  </a>
+</div>
+
+<!-- ── KPI strip ─────────────────────────────────────────── -->
+<div class="row g-2 mb-3">
+  {% with s=stats %}
+  <div class="col-6 col-md-2">
+    <div class="card"><div class="stat-mini">
+      <div class="val text-primary">{{ s.total }}</div>
+      <div class="lbl">Total</div>
+    </div></div>
+  </div>
+  <div class="col-6 col-md-2">
+    <div class="card"><div class="stat-mini">
+      <div class="val text-info">{{ s.today }}</div>
+      <div class="lbl">Today</div>
+    </div></div>
+  </div>
+  <div class="col-6 col-md-2">
+    <div class="card"><div class="stat-mini">
+      <div class="val text-warning">{{ s.pending }}</div>
+      <div class="lbl">Pending</div>
+    </div></div>
+  </div>
+  <div class="col-6 col-md-2">
+    <div class="card"><div class="stat-mini">
+      <div class="val text-success">{{ s.completed }}</div>
+      <div class="lbl">Completed</div>
+    </div></div>
+  </div>
+  <div class="col-6 col-md-2">
+    <div class="card"><div class="stat-mini">
+      <div class="val text-danger">{{ s.rejected }}</div>
+      <div class="lbl">Rejected</div>
+    </div></div>
+  </div>
+  <div class="col-6 col-md-2">
+    <div class="card"><div class="stat-mini">
+      <div class="val text-secondary">{{ s.cancelled }}</div>
+      <div class="lbl">Cancelled</div>
+    </div></div>
+  </div>
+  {% endwith %}
+</div>
+
+<!-- ── Filter bar ────────────────────────────────────────── -->
+<div class="filter-bar mb-3">
+  <form method="get" class="row g-2 align-items-end" id="filterForm">
+    <div class="col-md-3">
+      {{ filter_form.q }}
+    </div>
+    <div class="col-md-2">
+      {{ filter_form.status }}
+    </div>
+    <div class="col-md-2">
+      {{ filter_form.location }}
+    </div>
+    <div class="col-md-2">
+      {{ filter_form.date_from }}
+    </div>
+    <div class="col-md-2">
+      {{ filter_form.date_to }}
+    </div>
+    <div class="col-auto">
+      <button type="submit" class="btn btn-primary btn-sm">
+        <i class="bi bi-search me-1"></i>Filter
+      </button>
+      <a href="{% url 'assets:transfer_list' %}" class="btn btn-outline-secondary btn-sm ms-1">Clear</a>
+    </div>
+  </form>
+</div>
+
+<!-- ── Table ─────────────────────────────────────────────── -->
+<div class="card">
+  <div class="card-header d-flex align-items-center justify-content-between">
+    <h6 class="mb-0">Transfers <span class="badge bg-secondary ms-2">{{ paginator.count }}</span></h6>
+    <div class="d-flex align-items-center gap-2" style="font-size:.75rem;">
+      Sort:
+      <a href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}order=transfer_number" class="text-primary">No.</a>
+      <a href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}order=-transfer_date" class="text-primary">Date</a>
+      <a href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}order=status" class="text-primary">Status</a>
+    </div>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0" style="font-size:.82rem;">
+      <thead>
+        <tr>
+          <th>Transfer No</th>
+          <th>Asset</th>
+          <th>From</th>
+          <th>To</th>
+          <th>Requested By</th>
+          <th>Approved By</th>
+          <th>Status</th>
+          <th>Transfer Date</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in transfers %}
+        <tr>
+          <td>
+            <a href="{% url 'assets:transfer_detail' t.pk %}" class="fw-semibold text-decoration-none text-dark">
+              {{ t.transfer_number }}
+            </a>
+          </td>
+          <td>
+            <div class="fw-semibold">{{ t.asset.asset_name|truncatechars:22 }}</div>
+            <div class="text-muted" style="font-size:.68rem;font-family:monospace;">{{ t.asset.asset_code }}</div>
+          </td>
+          <td class="text-muted">{{ t.from_location }}</td>
+          <td class="text-muted">{{ t.to_location }}</td>
+          <td>{{ t.requested_by.get_full_name|default:t.requested_by.username }}</td>
+          <td>{{ t.approved_by.get_full_name|default:t.approved_by.username|default:"—" }}</td>
+          <td>
+            <span class="badge transfer-badge bg-{{ t.status_badge_class }}">
+              {{ t.get_status_display }}
+            </span>
+          </td>
+          <td class="text-muted">{{ t.transfer_date|date:"M j, Y" }}</td>
+          <td class="text-end tbl-action">
+            <a href="{% url 'assets:transfer_detail' t.pk %}" class="btn btn-sm btn-outline-secondary" title="View"><i class="bi bi-eye"></i></a>
+            {% if t.can_be_edited %}
+            <a href="{% url 'assets:transfer_update' t.pk %}" class="btn btn-sm btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></a>
+            {% endif %}
+            {% if t.is_pending %}
+            <form method="post" action="{% url 'assets:transfer_approve' t.pk %}" class="d-inline">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-outline-success" title="Approve" onclick="return confirm('Approve this transfer?')">
+                <i class="bi bi-check-lg"></i>
+              </button>
+            </form>
+            {% endif %}
+            <button class="btn btn-sm btn-outline-danger" title="Delete"
+                    onclick="confirmDelete('{% url 'assets:transfer_delete' t.pk %}', '{{ t.transfer_number }}')">
+              <i class="bi bi-trash3"></i>
+            </button>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="9" class="text-center py-5 text-muted">
+            <i class="bi bi-arrow-repeat d-block fs-1 mb-2 opacity-25"></i>
+            <strong>No transfers found.</strong>
+            <div class="mt-1" style="font-size:.8rem;">Try adjusting your filters or create a new transfer.</div>
+            <a href="{% url 'assets:transfer_create' %}" class="btn btn-primary btn-sm mt-3">
+              <i class="bi bi-plus-lg me-1"></i>New Transfer
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if is_paginated %}
+  <div class="card-footer">
+    {% include "includes/pagination.html" with page_obj=page_obj %}
+  </div>
+  {% endif %}
+</div>
+
+<!-- Delete confirmation modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:420px;">
+    <div class="modal-content border-danger">
+      <div class="modal-header border-danger bg-danger bg-opacity-10">
+        <h6 class="modal-title text-danger"><i class="bi bi-trash3 me-2"></i>Delete Transfer</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to delete transfer <strong id="deleteTransferNo"></strong>? This action cannot be undone.
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <form method="post" id="deleteForm"><{% csrf_token %}<button type="submit" class="btn btn-danger btn-sm">Delete</button></form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function confirmDelete(url, transferNo) {
+  document.getElementById('deleteTransferNo').textContent = transferNo;
+  const form = document.getElementById('deleteForm');
+  form.action = url;
+  form.innerHTML = '';
+  const csrf = document.createElement('input');
+  csrf.type = 'hidden'; csrf.name = 'csrfmiddlewaretoken';
+  csrf.value = '{{ csrf_token }}';
+  form.appendChild(csrf);
+  const btn = document.createElement('button');
+  btn.type = 'submit'; btn.className = 'btn btn-danger btn-sm';
+  btn.textContent = 'Delete';
+  form.appendChild(btn);
+  new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+</script>
+{% endblock %}

@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Asset Disposals{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1><i class="bi bi-trash3 me-2 text-primary"></i>Asset Disposals</h1>
+    <nav aria-label="breadcrumb"><ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{% url 'dashboard:home' %}">Dashboard</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'assets:asset_list' %}">Assets</a></li>
+      <li class="breadcrumb-item active">Disposals</li>
+    </ol></nav>
+  </div>
+  <a href="{% url 'assets:disposal_create' %}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Request Disposal</a>
+</div>
+
+<!-- Filter -->
+<div class="card mb-3">
+  <div class="card-body py-2">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-md-3">
+        <select name="status" class="form-select form-select-sm">
+          <option value="">All Status</option>
+          <option value="Pending Approval" {% if status_filter == 'Pending Approval' %}selected{% endif %}>Pending Approval</option>
+          <option value="Approved" {% if status_filter == 'Approved' %}selected{% endif %}>Approved</option>
+          <option value="Rejected" {% if status_filter == 'Rejected' %}selected{% endif %}>Rejected</option>
+        </select>
+      </div>
+      <div class="col-auto">
+        <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-funnel me-1"></i>Filter</button>
+        <a href="{% url 'assets:disposal_list' %}" class="btn btn-outline-secondary btn-sm ms-1">Clear</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead><tr>
+        <th>Asset</th><th>Reason</th><th>Residual Value</th><th>Requested By</th><th>Status</th><th>Date</th><th class="text-end">Actions</th>
+      </tr></thead>
+      <tbody>
+        {% for d in page_obj %}
+        <tr>
+          <td>
+            <a href="{% url 'assets:asset_detail' d.asset.pk %}" class="fw-semibold text-decoration-none">{{ d.asset.asset_name }}</a>
+            <div class="text-muted" style="font-size:.75rem;">{{ d.asset.asset_code }}</div>
+          </td>
+          <td style="font-size:.875rem;">{{ d.disposal_reason|truncatechars:50 }}</td>
+          <td style="font-size:.875rem;">${{ d.disposal_value|floatformat:2 }}</td>
+          <td style="font-size:.875rem;">{{ d.disposed_by.full_name }}</td>
+          <td>
+            {% if d.status == 'Approved' %}<span class="badge bg-success">{{ d.status }}</span>
+            {% elif d.status == 'Pending Approval' %}<span class="badge bg-warning text-dark">{{ d.status }}</span>
+            {% else %}<span class="badge bg-danger">{{ d.status }}</span>{% endif %}
+          </td>
+          <td style="font-size:.8rem;">{{ d.disposal_date|date:"M j, Y" }}</td>
+          <td class="text-end">
+            {% if d.status == 'Pending Approval' %}
+            <form method="post" action="{% url 'assets:disposal_approve' d.pk %}" class="d-inline">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-outline-success"><i class="bi bi-check-lg me-1"></i>Approve</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="text-center text-muted py-5">
+          <i class="bi bi-trash3 d-block fs-2 mb-2"></i>No disposal records found.
+        </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if page_obj.has_other_pages %}
+  <div class="card-footer">{% include "includes/pagination.html" with page_obj=page_obj %}</div>
+  {% endif %}
+</div>
+{% endblock %}

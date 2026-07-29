@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Deactivate User{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1><i class="bi bi-person-x me-2 text-danger"></i>Deactivate User</h1>
+    <nav aria-label="breadcrumb"><ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{% url 'accounts:user_list' %}">Users</a></li>
+      <li class="breadcrumb-item active">Deactivate</li>
+    </ol></nav>
+  </div>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-lg-5">
+    <div class="card border-danger">
+      <div class="card-header bg-danger text-white"><h6 class="mb-0"><i class="bi bi-exclamation-triangle me-2"></i>Confirm Deactivation</h6></div>
+      <div class="card-body text-center py-4">
+        <div class="user-avatar mx-auto mb-3" style="width:60px;height:60px;font-size:1.5rem;background:#dc2626;">
+          {{ user_obj.full_name|first|upper }}
+        </div>
+        <h5>{{ user_obj.full_name }}</h5>
+        <p class="text-muted">{{ user_obj.email }}</p>
+        <div class="alert alert-warning text-start mt-3">
+          <i class="bi bi-info-circle me-2"></i>
+          This will deactivate the account. The user will no longer be able to log in.
+          All their data and history will be preserved.
+        </div>
+        <form method="post" class="d-flex gap-2 justify-content-center mt-3">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger"><i class="bi bi-person-x me-1"></i>Confirm Deactivate</button>
+          <a href="{% url 'accounts:user_list' %}" class="btn btn-outline-secondary">Cancel</a>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

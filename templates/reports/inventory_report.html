@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Inventory Report{% endblock %}
+
+{% block extra_css %}
+<style>
+@media print {
+  .no-print { display: none !important; }
+  .card { border: 1px solid #dee2e6 !important; box-shadow: none !important; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header no-print">
+  <div>
+    <h1><i class="bi bi-box-seam me-2 text-primary"></i>Inventory Report</h1>
+    <nav aria-label="breadcrumb"><ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{% url 'reports:index' %}">Reports</a></li>
+      <li class="breadcrumb-item active">Inventory Report</li>
+    </ol></nav>
+  </div>
+  <div class="d-flex gap-2 no-print">
+    <button class="btn btn-outline-secondary btn-sm" onclick="window.print()">
+      <i class="bi bi-printer me-1"></i>Print
+    </button>
+    <a href="{% url 'reports:index' %}" class="btn btn-outline-primary btn-sm">
+      <i class="bi bi-arrow-left me-1"></i>Back
+    </a>
+  </div>
+</div>
+
+<!-- Report Meta -->
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <div class="text-muted small"><i class="bi bi-clock me-1"></i>Generated: {{ generated_at|date:"N j, Y, P" }}</div>
+  <div>
+    <span class="badge bg-primary-subtle text-primary border">Total Items: {{ items.count }}</span>
+    <span class="badge bg-danger-subtle text-danger border ms-1">Low Stock: {{ low_stock.count }}</span>
+    <span class="badge bg-success-subtle text-success border ms-1">Total Value: ${{ total_value|floatformat:2|intcomma }}</span>
+  </div>
+</div>
+
+<!-- Filter Form -->
+<div class="card mb-3 no-print">
+  <div class="card-body py-2">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-md-4">
+        <label class="form-label mb-1 small fw-semibold">Filter by Category</label>
+        <select name="category" class="form-select form-select-sm">
+          <option value="">All Categories</option>
+          {% for cat in categories %}
+          <option value="{{ cat.id }}" {% if cat_filter == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.category_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-auto">
+        <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-funnel me-1"></i>Filter</button>
+        <a href="{% url 'reports:inventory' %}" class="btn btn-outline-secondary btn-sm ms-1">Clear</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Data Table -->
+<div class="card">
+  <div class="card-header"><h6 class="mb-0">Inventory Stock Levels</h6></div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Item Code</th>
+            <th>Item Name</th>
+            <th>Category</th>
+            <th>Supplier</th>
+            <th>Unit</th>
+            <th class="text-end">Min Qty</th>
+            <th class="text-end">Current Qty</th>
+            <th class="text-end">Unit Price</th>
+            <th class="text-end">Total Value</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in items %}
+          <tr {% if item.is_low_stock %}class="table-danger"{% endif %}>
+            <td class="text-muted" style="font-size:.8rem;">{{ forloop.counter }}</td>
+            <td><code>{{ item.item_code }}</code></td>
+            <td class="fw-semibold">{{ item.item_name }}</td>
+            <td>{{ item.category.category_name }}</td>
+            <td>{{ item.supplier.supplier_name|default:"—" }}</td>
+            <td>{{ item.unit }}</td>
+            <td class="text-end">{{ item.min_qty }}</td>
+            <td class="text-end fw-bold">
+              {{ item.current_qty }}
+              {% if item.is_low_stock %}<i class="bi bi-exclamation-triangle-fill text-danger ms-1"></i>{% endif %}
+            </td>
+            <td class="text-end">${{ item.purchase_price|floatformat:2 }}</td>
+            <td class="text-end">${{ item.get_total_value|floatformat:2|intcomma }}</td>
+            <td>
+              {% if item.is_low_stock %}
+                <span class="badge bg-danger">Low Stock</span>
+              {% else %}
+                <span class="badge bg-success">OK</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="11" class="text-center text-muted py-4"><i class="bi bi-inbox d-block fs-3 mb-2"></i>No inventory items found.</td></tr>
+          {% endfor %}
+        </tbody>
+        <tfoot class="table-light">
+          <tr>
+            <td colspan="9" class="fw-bold text-end">Grand Total Value:</td>
+            <td class="fw-bold text-end">${{ total_value|floatformat:2|intcomma }}</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

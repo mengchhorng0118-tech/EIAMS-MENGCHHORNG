@@ -1,0 +1,110 @@
+{% load static i18n %}
+<aside class="sidebar" id="sidebar" role="navigation" aria-label="Main navigation">
+
+  <!-- Brand -->
+  <div class="sidebar-brand">
+    <div class="brand-icon" aria-hidden="true"><i class="bi bi-boxes"></i></div>
+    <div>
+      <div class="brand-text">EIAMS</div>
+      <div class="brand-sub">Inventory &amp; Assets</div>
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <nav class="sidebar-nav" aria-label="Sidebar menu">
+
+    <ul class="nav flex-column">
+      <li class="nav-item">
+        <a href="{% url 'dashboard:home' %}"
+           class="nav-link {% if request.resolver_match.app_name == 'dashboard' %}active{% endif %}"
+           aria-current="{% if request.resolver_match.app_name == 'dashboard' %}page{% else %}false{% endif %}">
+          <i class="bi bi-speedometer2" aria-hidden="true"></i>
+          <span>{% trans "Dashboard" %}</span>
+        </a>
+      </li>
+    </ul>
+
+    <div class="nav-section-label" aria-hidden="true">{% trans "Inventory" %}</div>
+    <ul class="nav flex-column">
+      <li><a href="{% url 'inventory:item_list' %}" class="nav-link {% if 'items' in request.path %}active{% endif %}">
+        <i class="bi bi-box-seam" aria-hidden="true"></i><span>{% trans "Items" %}</span>
+      </a></li>
+      <li><a href="{% url 'inventory:category_list' %}" class="nav-link {% if 'categories' in request.path %}active{% endif %}">
+        <i class="bi bi-tag" aria-hidden="true"></i><span>{% trans "Categories" %}</span>
+      </a></li>
+      <li><a href="{% url 'inventory:location_list' %}" class="nav-link {% if 'locations' in request.path %}active{% endif %}">
+        <i class="bi bi-geo-alt" aria-hidden="true"></i><span>{% trans "Locations" %}</span>
+      </a></li>
+      <li><a href="{% url 'inventory:supplier_list' %}" class="nav-link {% if 'suppliers' in request.path %}active{% endif %}">
+        <i class="bi bi-truck" aria-hidden="true"></i><span>{% trans "Suppliers" %}</span>
+      </a></li>
+    </ul>
+
+    <div class="nav-section-label" aria-hidden="true">{% trans "Stock" %}</div>
+    <ul class="nav flex-column">
+      <li><a href="{% url 'stock:movement_list' %}" class="nav-link {% if 'stock' in request.path and 'alerts' not in request.path %}active{% endif %}">
+        <i class="bi bi-arrow-left-right" aria-hidden="true"></i><span>{% trans "Movements" %}</span>
+      </a></li>
+      <li><a href="{% url 'stock:alert_list' %}" class="nav-link {% if 'alerts' in request.path %}active{% endif %}">
+        <i class="bi bi-bell" aria-hidden="true"></i>
+        <span>{% trans "Low Stock Alerts" %}</span>
+        {% if open_alerts %}<span class="badge bg-danger" aria-label="{{ open_alerts }} alerts">{{ open_alerts }}</span>{% endif %}
+      </a></li>
+    </ul>
+
+    <div class="nav-section-label" aria-hidden="true">{% trans "Assets" %}</div>
+    <ul class="nav flex-column">
+      <li><a href="{% url 'assets:asset_list' %}" class="nav-link {% if 'assets' in request.path and 'transfer' not in request.path and 'maintenance' not in request.path and 'disposal' not in request.path %}active{% endif %}">
+        <i class="bi bi-pc-display" aria-hidden="true"></i><span>{% trans "Assets" %}</span>
+      </a></li>
+      <li><a href="{% url 'assets:transfer_list' %}" class="nav-link {% if 'transfers' in request.path %}active{% endif %}">
+        <i class="bi bi-arrow-repeat" aria-hidden="true"></i><span>{% trans "Transfers" %}</span>
+      </a></li>
+      <li><a href="{% url 'assets:maintenance_list' %}" class="nav-link {% if 'maintenance' in request.path %}active{% endif %}">
+        <i class="bi bi-tools" aria-hidden="true"></i><span>{% trans "Maintenance" %}</span>
+      </a></li>
+      <li><a href="{% url 'assets:disposal_list' %}" class="nav-link {% if 'disposals' in request.path %}active{% endif %}">
+        <i class="bi bi-trash3" aria-hidden="true"></i><span>{% trans "Disposals" %}</span>
+      </a></li>
+    </ul>
+
+    <div class="nav-section-label" aria-hidden="true">{% trans "Reports" %}</div>
+    <ul class="nav flex-column">
+      <li><a href="{% url 'reports:index' %}" class="nav-link {% if 'reports' in request.path %}active{% endif %}">
+        <i class="bi bi-bar-chart-line" aria-hidden="true"></i><span>{% trans "Reports" %}</span>
+      </a></li>
+    </ul>
+
+    {% if user.is_super_admin or user.is_admin_or_above %}
+    <div class="nav-section-label" aria-hidden="true">{% trans "Administration" %}</div>
+    <ul class="nav flex-column">
+      <li><a href="{% url 'accounts:user_list' %}" class="nav-link {% if 'users' in request.path %}active{% endif %}">
+        <i class="bi bi-people" aria-hidden="true"></i><span>{% trans "Users" %}</span>
+      </a></li>
+      <li><a href="/admin/" class="nav-link" target="_blank" rel="noopener">
+        <i class="bi bi-shield-lock" aria-hidden="true"></i><span>{% trans "Django Admin" %}</span>
+        <i class="bi bi-box-arrow-up-right ms-auto" style="font-size:.6rem;opacity:.5;" aria-hidden="true"></i>
+      </a></li>
+    </ul>
+    {% endif %}
+
+  </nav>
+
+  <!-- Sidebar footer — user pill -->
+  <div class="sidebar-footer">
+    <a href="{% url 'accounts:profile' %}" class="sidebar-user-pill" title="My Profile">
+      <div class="user-avatar" style="width:28px;height:28px;font-size:.65rem;" aria-hidden="true">
+        {% if user.profile_pic %}<img src="{{ user.profile_pic.url }}" alt="">
+        {% else %}{{ user.full_name|first|upper }}{% endif %}
+      </div>
+      <div style="min-width:0;flex:1;">
+        <div style="color:#e2e8f0;font-size:.75rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+          {{ user.full_name|truncatechars:18 }}
+        </div>
+        <div class="sidebar-user-role">{{ user.get_role_name|default:"No Role" }}</div>
+      </div>
+      <i class="bi bi-chevron-right" style="color:#475569;font-size:.6rem;" aria-hidden="true"></i>
+    </a>
+  </div>
+
+</aside>

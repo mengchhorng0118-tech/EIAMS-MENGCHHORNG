@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Categories{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1><i class="bi bi-tag me-2 text-primary"></i>Categories</h1>
+    <nav aria-label="breadcrumb"><ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{% url 'dashboard:home' %}">Dashboard</a></li>
+      <li class="breadcrumb-item active">Categories</li>
+    </ol></nav>
+  </div>
+  <a href="{% url 'inventory:category_create' %}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Add Category</a>
+</div>
+
+<!-- Filters -->
+<div class="card mb-3">
+  <div class="card-body py-2">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-md-4"><input type="text" name="q" class="form-control form-control-sm" placeholder="Search…" value="{{ search_query }}"></div>
+      <div class="col-md-3">
+        <select name="type" class="form-select form-select-sm">
+          <option value="">All Types</option>
+          <option value="Inventory" {% if type_filter == 'Inventory' %}selected{% endif %}>Inventory</option>
+          <option value="Asset" {% if type_filter == 'Asset' %}selected{% endif %}>Asset</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <select name="status" class="form-select form-select-sm">
+          <option value="">All Status</option>
+          <option value="Active" {% if status_filter == 'Active' %}selected{% endif %}>Active</option>
+          <option value="Inactive" {% if status_filter == 'Inactive' %}selected{% endif %}>Inactive</option>
+        </select>
+      </div>
+      <div class="col-auto">
+        <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-search me-1"></i>Filter</button>
+        <a href="{% url 'inventory:category_list' %}" class="btn btn-outline-secondary btn-sm ms-1">Clear</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header d-flex align-items-center justify-content-between">
+    <h6 class="mb-0">Categories <span class="badge bg-secondary ms-2">{{ total }}</span></h6>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead><tr><th>Name</th><th>Type</th><th>Description</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
+      <tbody>
+        {% for cat in page_obj %}
+        <tr>
+          <td class="fw-semibold">{{ cat.category_name }}</td>
+          <td><span class="badge {% if cat.category_type == 'Inventory' %}bg-primary{% else %}bg-info{% endif %}">{{ cat.category_type }}</span></td>
+          <td style="font-size:.875rem;">{{ cat.description|truncatechars:60|default:"—" }}</td>
+          <td><span class="badge {% if cat.status == 'Active' %}bg-success{% else %}bg-secondary{% endif %}">{{ cat.status }}</span></td>
+          <td class="text-end">
+            <a href="{% url 'inventory:category_update' cat.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
+            <a href="{% url 'inventory:category_delete' cat.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash3"></i></a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="text-center text-muted py-4"><i class="bi bi-tag d-block fs-2 mb-2"></i>No categories found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if page_obj.has_other_pages %}<div class="card-footer">{% include "includes/pagination.html" with page_obj=page_obj %}</div>{% endif %}
+</div>
+
+{% endblock %}

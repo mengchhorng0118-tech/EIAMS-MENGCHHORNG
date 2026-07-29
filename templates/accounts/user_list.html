@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}User Management{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1><i class="bi bi-people me-2 text-primary"></i>User Management</h1>
+    <nav aria-label="breadcrumb"><ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{% url 'dashboard:home' %}">Dashboard</a></li>
+      <li class="breadcrumb-item active">Users</li>
+    </ol></nav>
+  </div>
+  <a href="{% url 'accounts:user_create' %}" class="btn btn-primary">
+    <i class="bi bi-plus-lg me-1"></i>Add User
+  </a>
+</div>
+
+<!-- Filters -->
+<div class="card mb-3">
+  <div class="card-body py-2">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-md-4">
+        <input type="text" name="q" class="form-control form-control-sm" placeholder="Search name, email, username…" value="{{ search_query }}">
+      </div>
+      <div class="col-md-3">
+        <select name="role" class="form-select form-select-sm">
+          <option value="">All Roles</option>
+          {% for role in roles %}
+          <option value="{{ role.role_name }}" {% if role_filter == role.role_name %}selected{% endif %}>{{ role.role_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <select name="status" class="form-select form-select-sm">
+          <option value="">All Status</option>
+          <option value="Active" {% if status_filter == 'Active' %}selected{% endif %}>Active</option>
+          <option value="Inactive" {% if status_filter == 'Inactive' %}selected{% endif %}>Inactive</option>
+        </select>
+      </div>
+      <div class="col-auto">
+        <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-search me-1"></i>Filter</button>
+        <a href="{% url 'accounts:user_list' %}" class="btn btn-outline-secondary btn-sm ms-1">Clear</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Table -->
+<div class="card">
+  <div class="card-header d-flex align-items-center justify-content-between">
+    <h6 class="mb-0">Users <span class="badge bg-secondary ms-2">{{ total_users }}</span></h6>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead><tr>
+        <th>User</th><th>Role</th><th>Department</th><th>Status</th><th>Joined</th><th class="text-end">Actions</th>
+      </tr></thead>
+      <tbody>
+        {% for u in page_obj %}
+        <tr>
+          <td>
+            <div class="d-flex align-items-center gap-2">
+              <div class="user-avatar" style="width:34px;height:34px;font-size:.8rem;">
+                {% if u.profile_pic %}<img src="{{ u.profile_pic.url }}" alt="">{% else %}{{ u.full_name|first|upper }}{% endif %}
+              </div>
+              <div>
+                <div class="fw-semibold" style="font-size:.875rem;">{{ u.full_name }}</div>
+                <div class="text-muted" style="font-size:.75rem;">{{ u.email }}</div>
+              </div>
+            </div>
+          </td>
+          <td><span class="badge bg-primary">{{ u.get_role_name }}</span></td>
+          <td style="font-size:.875rem;">{{ u.department|default:"—" }}</td>
+          <td>
+            <span class="badge {% if u.status == 'Active' %}bg-success{% else %}bg-danger{% endif %}">{{ u.status }}</span>
+          </td>
+          <td style="font-size:.8rem;">{{ u.date_joined|date:"M j, Y" }}</td>
+          <td class="text-end">
+            <a href="{% url 'accounts:user_detail' u.pk %}" class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip" title="View"><i class="bi bi-eye"></i></a>
+            <a href="{% url 'accounts:user_update' u.pk %}" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="Edit"><i class="bi bi-pencil"></i></a>
+            {% if u != request.user %}
+            <a href="{% url 'accounts:user_delete' u.pk %}" class="btn btn-sm btn-outline-danger" data-bs-toggle="tooltip" title="Deactivate"><i class="bi bi-person-x"></i></a>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="text-center text-muted py-5">
+          <i class="bi bi-people d-block fs-2 mb-2"></i>No users found.
+        </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if page_obj.has_other_pages %}
+  <div class="card-footer">
+    {% include "includes/pagination.html" with page_obj=page_obj %}
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}

@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Maintenance Records{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1><i class="bi bi-tools me-2 text-primary"></i>Maintenance Records</h1>
+    <nav aria-label="breadcrumb"><ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{% url 'dashboard:home' %}">Dashboard</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'assets:asset_list' %}">Assets</a></li>
+      <li class="breadcrumb-item active">Maintenance</li>
+    </ol></nav>
+  </div>
+  <a href="{% url 'assets:maintenance_create' %}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Log Maintenance</a>
+</div>
+
+<!-- Filter -->
+<div class="card mb-3">
+  <div class="card-body py-2">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-md-3">
+        <select name="status" class="form-select form-select-sm">
+          <option value="">All Status</option>
+          <option value="Pending" {% if status_filter == 'Pending' %}selected{% endif %}>Pending</option>
+          <option value="In Progress" {% if status_filter == 'In Progress' %}selected{% endif %}>In Progress</option>
+          <option value="Completed" {% if status_filter == 'Completed' %}selected{% endif %}>Completed</option>
+        </select>
+      </div>
+      <div class="col-auto">
+        <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-funnel me-1"></i>Filter</button>
+        <a href="{% url 'assets:maintenance_list' %}" class="btn btn-outline-secondary btn-sm ms-1">Clear</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead><tr>
+        <th>Asset</th><th>Type</th><th>Issue</th><th>Cost</th><th>Performed By</th><th>Status</th><th>Date</th>
+      </tr></thead>
+      <tbody>
+        {% for rec in page_obj %}
+        <tr>
+          <td>
+            <a href="{% url 'assets:asset_detail' rec.asset.pk %}" class="fw-semibold text-decoration-none">{{ rec.asset.asset_name }}</a>
+            <div class="text-muted" style="font-size:.75rem;">{{ rec.asset.asset_code }}</div>
+          </td>
+          <td><span class="badge {% if rec.maintenance_type == 'Preventive' %}bg-info text-dark{% else %}bg-warning text-dark{% endif %}">{{ rec.maintenance_type }}</span></td>
+          <td style="font-size:.875rem;">{{ rec.issue_description|truncatechars:40|default:"—" }}</td>
+          <td style="font-size:.875rem;">${{ rec.cost|floatformat:2 }}</td>
+          <td style="font-size:.875rem;">{{ rec.performed_by|default:"—" }}</td>
+          <td>
+            {% if rec.status == 'Completed' %}<span class="badge bg-success">{{ rec.status }}</span>
+            {% elif rec.status == 'In Progress' %}<span class="badge bg-warning text-dark">{{ rec.status }}</span>
+            {% else %}<span class="badge bg-secondary">{{ rec.status }}</span>{% endif %}
+          </td>
+          <td style="font-size:.8rem;">{{ rec.maintenance_date|date:"M j, Y" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="text-center text-muted py-5">
+          <i class="bi bi-tools d-block fs-2 mb-2"></i>No maintenance records found.
+        </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if page_obj.has_other_pages %}
+  <div class="card-footer">{% include "includes/pagination.html" with page_obj=page_obj %}</div>
+  {% endif %}
+</div>
+{% endblock %}

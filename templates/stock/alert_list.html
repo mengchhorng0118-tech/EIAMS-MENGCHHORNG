@@ -1,0 +1,302 @@
+{% extends "base.html" %}
+{% block title %}Low Stock Alerts{% endblock %}
+
+{% block extra_css %}
+<style>
+.qty-critical { color:#dc2626; font-weight:700; }
+.qty-warning  { color:#d97706; font-weight:700; }
+.stock-bar    { height:5px; border-radius:99px; background:#f1f5f9; margin-top:3px; }
+.stock-fill   { height:5px; border-radius:99px; transition:width .4s; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ── Header ──────────────────────────────────────────────── -->
+<div class="page-header">
+  <div>
+    <h1><i class="bi bi-exclamation-triangle-fill me-2 text-warning"></i>Low Stock Alerts</h1>
+    <nav aria-label="breadcrumb"><ol class="breadcrumb mb-0">
+      <li class="breadcrumb-item"><a href="{% url 'dashboard:home' %}">Dashboard</a></li>
+      <li class="breadcrumb-item active">Low Stock Alerts</li>
+    </ol></nav>
+  </div>
+  <div class="d-flex align-items-center gap-2">
+    {% if open_count %}
+      <span class="badge bg-danger" style="font-size:.85rem;padding:.4em .8em;">
+        <i class="bi bi-bell-fill me-1"></i>{{ open_count }} Open
+      </span>
+    {% endif %}
+    <a href="{% url 'stock:movement_create' %}" class="btn btn-success btn-sm">
+      <i class="bi bi-plus-lg me-1"></i>Record Movement
+    </a>
+  </div>
+</div>
+
+<!-- ── Filter ──────────────────────────────────────────────── -->
+<div class="card mb-3">
+  <div class="card-body py-2">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-md-3">
+        <select name="status" class="form-select form-select-sm" aria-label="Filter by status">
+          <option value="">All Status</option>
+          <option value="New"      {% if status_filter == 'New' %}selected{% endif %}>New (Open)</option>
+          <option value="Resolved" {% if status_filter == 'Resolved' %}selected{% endif %}>Resolved</option>
+        </select>
+      </div>
+      <div class="col-auto">
+        <button type="submit" class="btn btn-primary btn-sm">
+          <i class="bi bi-funnel me-1"></i>Filter
+        </button>
+        <a href="{% url 'stock:alert_list' %}" class="btn btn-outline-secondary btn-sm ms-1">Clear</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ── Alerts Table ────────────────────────────────────────── -->
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0" aria-label="Low stock alerts">
+      <thead>
+        <tr>
+          <th scope="col">Item</th>
+          <th scope="col">Stock Level</th>
+          <th scope="col" class="text-center">Min Qty</th>
+          <th scope="col">Status</th>
+          <th scope="col">Alert Date</th>
+          <th scope="col">Resolved At</th>
+          <th scope="col" class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for alert in page_obj %}
+        <tr>
+          <!-- Item name + code -->
+          <td>
+            <a href="{% url 'inventory:item_detail' alert.item.pk %}"
+               class="fw-semibold text-decoration-none text-dark">
+              {{ alert.item.item_name }}
+            </a>
+            <div class="text-muted" style="font-size:.72rem;">{{ alert.item.item_code }}</div>
+          </td>
+
+          <!-- Current qty with mini progress bar -->
+          <td style="min-width:120px;">
+            <div class="d-flex align-items-center gap-2">
+              {% if alert.item.current_qty == 0 %}
+                <span class="qty-critical">0</span>
+                <span class="badge bg-danger bp ms-1" style="font-size:.65rem;">Out</span>
+              {% elif alert.item.current_qty <= alert.item.min_qty %}
+                <span class="qty-critical">{{ alert.item.current_qty }}</span>
+              {% else %}
+                <span class="qty-warning">{{ alert.item.current_qty }}</span>
+              {% endif %}
+              <span class="text-muted" style="font-size:.7rem;">{{ alert.item.unit }}</span>
+            </div>
+            <!-- Stock fill bar -->
+            {% if alert.item.min_qty > 0 %}
+            <div class="stock-bar" style="width:90px;" title="{{ alert.item.current_qty }} / {{ alert.item.min_qty }}">
+              {% with fill_pct=alert.item.current_qty|default:0 %}
+              <div class="stock-fill {% if alert.item.current_qty == 0 %}bg-danger{% elif alert.item.current_qty <= alert.item.min_qty %}bg-warning{% else %}bg-success{% endif %}"
+                   style="width:{% if alert.item.min_qty > 0 %}{% widthratio alert.item.current_qty alert.item.min_qty 100 %}{% else %}100{% endif %}%;max-width:100%;"></div>
+              {% endwith %}
+            </div>
+            {% endif %}
+          </td>
+
+          <!-- Min qty -->
+          <td class="text-center" style="font-size:.85rem;">{{ alert.min_qty }}</td>
+
+          <!-- Status badge -->
+          <td>
+            {% if alert.status == 'New' %}
+              <span class="badge bp bg-danger text-white">
+                <i class="bi bi-exclamation-circle me-1"></i>New
+              </span>
+            {% else %}
+              <span class="badge bp bg-success text-white">
+                <i class="bi bi-check-circle me-1"></i>Resolved
+              </span>
+            {% endif %}
+          </td>
+
+          <!-- Dates -->
+          <td style="font-size:.78rem;white-space:nowrap;">{{ alert.alert_date|date:"M j, Y H:i" }}</td>
+          <td style="font-size:.78rem;white-space:nowrap;">
+            {{ alert.resolved_at|date:"M j, Y H:i"|default:"—" }}
+          </td>
+
+          <!-- Actions -->
+          <td class="text-end">
+            {% if alert.status == 'New' %}
+
+            <!-- Quick Restock button → opens modal -->
+            <button type="button"
+                    class="btn btn-sm btn-primary"
+                    data-bs-toggle="modal"
+                    data-bs-target="#restockModal{{ alert.pk }}"
+                    title="Quick Restock — add stock IN and auto-resolve alert">
+              <i class="bi bi-box-arrow-in-down me-1"></i>Restock
+            </button>
+
+            <!-- Resolve-only button -->
+            <form method="post" action="{% url 'stock:alert_resolve' alert.pk %}" class="d-inline ms-1">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-outline-success"
+                      title="Mark alert resolved without adding stock">
+                <i class="bi bi-check-lg"></i>
+              </button>
+            </form>
+
+            {% endif %}
+
+            <!-- View item button always visible -->
+            <a href="{% url 'inventory:item_detail' alert.item.pk %}"
+               class="btn btn-sm btn-outline-secondary ms-1"
+               title="View item details">
+              <i class="bi bi-box-seam"></i>
+            </a>
+
+            <!-- Record movement for this item -->
+            <a href="{% url 'stock:movement_create' %}?item={{ alert.item.pk }}"
+               class="btn btn-sm btn-outline-primary ms-1"
+               title="Record a stock movement for this item">
+              <i class="bi bi-plus-slash-minus"></i>
+            </a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" class="text-center text-muted py-5">
+            <i class="bi bi-check-circle d-block fs-1 text-success mb-2 opacity-50"></i>
+            <strong>All clear!</strong> No low-stock alerts found.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if page_obj.has_other_pages %}
+  <div class="card-footer">
+    {% include "includes/pagination.html" with page_obj=page_obj %}
+  </div>
+  {% endif %}
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     QUICK RESTOCK MODALS (one per open alert)
+════════════════════════════════════════════════════════ -->
+{% for alert in page_obj %}
+{% if alert.status == 'New' %}
+<div class="modal fade" id="restockModal{{ alert.pk }}"
+     tabindex="-1" aria-labelledby="restockLabel{{ alert.pk }}" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:460px;">
+    <div class="modal-content border-0 shadow-lg" style="border-radius:14px;overflow:hidden;">
+
+      <!-- Header -->
+      <div class="modal-header" style="background:linear-gradient(135deg,#1e3a8a,#2563eb);border:none;">
+        <h5 class="modal-title text-white fw-700" id="restockLabel{{ alert.pk }}" style="font-size:.95rem;">
+          <i class="bi bi-box-arrow-in-down me-2"></i>Quick Restock
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body" style="padding:1.4rem;">
+
+        <!-- Item info strip -->
+        <div class="d-flex align-items-start gap-3 mb-3 p-2 rounded" style="background:#f8fafc;border:1px solid #e2e8f0;">
+          <div class="d-flex align-items-center justify-content-center rounded"
+               style="width:40px;height:40px;background:#eff6ff;color:#2563eb;font-size:1.1rem;flex-shrink:0;">
+            <i class="bi bi-box-seam-fill"></i>
+          </div>
+          <div style="min-width:0;">
+            <div class="fw-bold" style="font-size:.85rem;color:#0f172a;">{{ alert.item.item_name }}</div>
+            <div class="text-muted" style="font-size:.72rem;">{{ alert.item.item_code }}</div>
+            <div class="d-flex gap-3 mt-1" style="font-size:.72rem;">
+              <span>Current: <strong class="text-danger">{{ alert.item.current_qty }} {{ alert.item.unit }}</strong></span>
+              <span>Min: <strong>{{ alert.item.min_qty }} {{ alert.item.unit }}</strong></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Alert about current state -->
+        {% if alert.item.current_qty == 0 %}
+        <div class="alert alert-danger d-flex gap-2 align-items-center py-2 mb-3" style="font-size:.78rem;">
+          <i class="bi bi-exclamation-octagon-fill flex-shrink-0"></i>
+          <div><strong>Out of Stock!</strong> This item has zero remaining units.</div>
+        </div>
+        {% else %}
+        <div class="alert alert-warning d-flex gap-2 align-items-center py-2 mb-3" style="font-size:.78rem;">
+          <i class="bi bi-exclamation-triangle-fill flex-shrink-0"></i>
+          <div>Stock is <strong>below minimum threshold</strong>. Add stock to resolve this alert.</div>
+        </div>
+        {% endif %}
+
+        <!-- Restock form -->
+        <form method="post" action="{% url 'stock:alert_restock' alert.pk %}" id="restockForm{{ alert.pk }}">
+          {% csrf_token %}
+          <div class="row g-2">
+            <div class="col-12">
+              <label class="form-label fw-semibold" style="font-size:.8rem;">
+                Quantity to Add <span class="text-danger">*</span>
+              </label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-plus-lg"></i></span>
+                <input type="number"
+                       name="quantity"
+                       class="form-control"
+                       value="{{ alert.item.min_qty|add:5 }}"
+                       min="1"
+                       required
+                       aria-label="Quantity to restock"
+                       style="font-size:.9rem;font-weight:700;">
+                <span class="input-group-text text-muted" style="font-size:.8rem;">{{ alert.item.unit }}</span>
+              </div>
+              <div class="mt-1 text-muted" style="font-size:.7rem;">
+                Suggested: {{ alert.item.min_qty|add:5 }} {{ alert.item.unit }}
+                (minimum {{ alert.item.min_qty }} + 5 buffer)
+              </div>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold" style="font-size:.8rem;">Reference / PO Number</label>
+              <input type="text" name="reference_no" class="form-control form-control-sm"
+                     placeholder="e.g. PO-2026-001 (optional)">
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold" style="font-size:.8rem;">Remarks</label>
+              <textarea name="remarks" class="form-control form-control-sm" rows="2"
+                        placeholder="Optional note about this restock"></textarea>
+            </div>
+          </div>
+
+          <!-- Info note -->
+          <div class="mt-3 d-flex gap-2 align-items-start" style="font-size:.72rem;color:#64748b;">
+            <i class="bi bi-info-circle-fill mt-1 flex-shrink-0"></i>
+            <div>
+              This will record a <strong>Stock IN</strong> movement and
+              automatically resolve the alert if the new quantity exceeds the minimum threshold.
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- Footer -->
+      <div class="modal-footer" style="border-top:1px solid #f1f5f9;padding:.75rem 1.4rem;">
+        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">
+          <i class="bi bi-x-lg me-1"></i>Cancel
+        </button>
+        <button type="submit" form="restockForm{{ alert.pk }}" class="btn btn-primary btn-sm">
+          <i class="bi bi-box-arrow-in-down me-1"></i>Confirm Restock
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endfor %}
+
+{% endblock %}

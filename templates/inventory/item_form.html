@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block extra_css %}
+<style>
+  .km-field input { font-family:'Noto Sans Khmer','Inter',sans-serif !important; }
+  .lang-tag {
+    display:inline-flex;align-items:center;gap:.3rem;
+    font-size:.65rem;font-weight:700;padding:.2em .55em;border-radius:99px;
+    letter-spacing:.04em;text-transform:uppercase;
+  }
+  .lang-tag.en { background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe; }
+  .lang-tag.km { background:#faf5ff;color:#7c3aed;border:1px solid #ddd6fe; }
+</style>
+{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1><i class="bi bi-box-seam me-2 text-primary"></i>{{ page_title }}</h1>
+    <nav aria-label="breadcrumb"><ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{% url 'inventory:item_list' %}">{% trans "Items" %}</a></li>
+      <li class="breadcrumb-item active">{{ action }}</li>
+    </ol></nav>
+  </div>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header"><h6 class="mb-0">{{ page_title }}</h6></div>
+      <div class="card-body">
+        <form method="post">
+          {% csrf_token %}
+          <div class="row g-3">
+
+            <!-- Codes row -->
+            <div class="col-md-6">
+              <label class="form-label">{% trans "Item Code" %}</label>
+              {{ form.item_code }}
+              <div class="form-text">{% trans "Leave blank to auto-generate." %}</div>
+              {% if form.item_code.errors %}<div class="text-danger mt-1" style="font-size:.8rem;">{{ form.item_code.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">{% trans "Barcode" %}</label>
+              {{ form.barcode }}
+            </div>
+
+            <!-- ── Bilingual name section ── -->
+            <div class="col-12">
+              <div class="border rounded p-3" style="background:#fafbfc;">
+                <div class="fw-semibold mb-2" style="font-size:.8rem;color:#374151;">
+                  <i class="bi bi-translate me-1 text-primary"></i>{% trans "Item Name (Bilingual)" %}
+                </div>
+                <div class="row g-2">
+                  <div class="col-md-6">
+                    <label class="form-label d-flex align-items-center gap-2">
+                      {% trans "English Name" %} <span class="text-danger">*</span>
+                      <span class="lang-tag en">EN</span>
+                    </label>
+                    {{ form.item_name }}
+                    {% if form.item_name.errors %}
+                      <div class="text-danger mt-1" style="font-size:.8rem;">{{ form.item_name.errors.0 }}</div>
+                    {% endif %}
+                  </div>
+                  <div class="col-md-6 km-field">
+                    <label class="form-label d-flex align-items-center gap-2">
+                      <span style="font-family:'Noto Sans Khmer',sans-serif;">ឈ្មោះជាភាសាខ្មែរ</span>
+                      <span class="lang-tag km">ខ្មែរ</span>
+                    </label>
+                    {{ form.item_name_km }}
+                    <div class="form-text">{% trans "Optional — shown when language is set to Khmer" %}</div>
+                    {% if form.item_name_km.errors %}
+                      <div class="text-danger mt-1" style="font-size:.8rem;">{{ form.item_name_km.errors.0 }}</div>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Category + Supplier -->
+            <div class="col-md-6">
+              <label class="form-label">{% trans "Category" %} <span class="text-danger">*</span></label>
+              {{ form.category }}
+              {% if form.category.errors %}<div class="text-danger mt-1" style="font-size:.8rem;">{{ form.category.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">{% trans "Supplier" %}</label>
+              {{ form.supplier }}
+            </div>
+
+            <!-- Unit / Price / Status -->
+            <div class="col-md-4">
+              <label class="form-label">{% trans "Unit" %} <span class="text-danger">*</span></label>
+              {{ form.unit }}
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">{% trans "Purchase Price" %}</label>
+              {{ form.purchase_price }}
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">{% trans "Status" %}</label>
+              {{ form.status }}
+            </div>
+
+            <!-- Stock -->
+            <div class="col-md-6">
+              <label class="form-label">{% trans "Current Quantity" %}</label>
+              {{ form.current_qty }}
+              {% if form.current_qty.errors %}<div class="text-danger mt-1" style="font-size:.8rem;">{{ form.current_qty.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">{% trans "Minimum Quantity" %}</label>
+              {{ form.min_qty }}
+              <div class="form-text">{% trans "Alert triggers when stock ≤ this value." %}</div>
+            </div>
+
+            <!-- Description -->
+            <div class="col-12">
+              <label class="form-label">{% trans "Description" %}</label>
+              {{ form.description }}
+            </div>
+
+          </div><!-- /row -->
+
+          {% if form.non_field_errors %}
+          <div class="alert alert-danger mt-3">{{ form.non_field_errors }}</div>
+          {% endif %}
+
+          <div class="mt-4 d-flex gap-2">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-check-lg me-1"></i>{{ action }} {% trans "Item" %}
+            </button>
+            <a href="{% url 'inventory:item_list' %}" class="btn btn-outline-secondary">{% trans "Cancel" %}</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

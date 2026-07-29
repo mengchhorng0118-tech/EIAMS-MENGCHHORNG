@@ -1,0 +1,586 @@
+{% extends "base.html" %}
+{% load humanize i18n %}
+{% block title %}Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ══════════════════════════════════════════════════════════
+   DASHBOARD — Full-screen no-scroll layout
+   Target: fits 100% inside main-scroll on 1366×768 and above
+   ══════════════════════════════════════════════════════════ */
+
+/* Override page-content: use full remaining height as flex column */
+.page-content {
+  padding: 12px 20px 8px !important;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  /* Fill exactly the height of .main-scroll */
+  min-height: 0;
+}
+
+/* ── Welcome banner ──────────────────────────────────────── */
+.wb {
+  background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 55%, #7c3aed 100%);
+  border-radius: 12px;
+  padding: 14px 20px;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 6px 20px rgba(37,99,235,.28);
+  flex-shrink: 0;
+}
+.wb::before {
+  content:''; position:absolute; top:-30px; right:-30px;
+  width:130px; height:130px; border-radius:50%; background:rgba(255,255,255,.06);
+}
+.wb-greet  { font-size:.62rem; font-weight:700; opacity:.7; text-transform:uppercase; letter-spacing:.08em; }
+.wb-name   { font-size:1.15rem; font-weight:800; letter-spacing:-.03em; line-height:1.1; }
+.wb-sub    { font-size:.65rem; opacity:.65; margin-top:2px; }
+.wb-date   { font-size:.65rem; opacity:.8; font-weight:600; }
+
+/* ── ROW 1: welcome + quick actions ─────────────────────── */
+.row1 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  flex-shrink: 0;
+}
+@media (max-width:900px) { .row1 { grid-template-columns: 1fr; } }
+
+/* ── KPI strip ───────────────────────────────────────────── */
+.kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 7px;
+  flex-shrink: 0;
+}
+@media (max-width:1280px) { .kpi-strip { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width:768px)  { .kpi-strip { grid-template-columns: repeat(2, 1fr); } }
+
+.kc {                             /* compact KPI card */
+  background: #fff;
+  border: 1px solid #e8eef5;
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: flex; align-items: center; gap: 10px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.05);
+  transition: box-shadow .2s, transform .2s;
+  text-decoration: none; color: inherit;
+  position: relative; overflow: hidden;
+}
+.kc::after {
+  content:''; position:absolute; top:-14px; right:-14px;
+  width:55px; height:55px; border-radius:50%; opacity:.07;
+}
+.kc.kb::after { background:#2563eb; } .kc.kp::after { background:#7c3aed; }
+.kc.kr::after { background:#dc2626; } .kc.kg::after { background:#16a34a; }
+.kc.kc2::after{ background:#0891b2; } .kc.ko::after { background:#ea580c; }
+.kc:hover { box-shadow:0 6px 18px rgba(0,0,0,.1); transform:translateY(-2px); color:inherit; text-decoration:none; }
+.kc-icon {
+  width:36px; height:36px; border-radius:8px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:1rem; flex-shrink:0;
+}
+.kc-icon.b  { background:#eff6ff; color:#2563eb; }
+.kc-icon.p  { background:#faf5ff; color:#7c3aed; }
+.kc-icon.r  { background:#fef2f2; color:#dc2626; }
+.kc-icon.g  { background:#f0fdf4; color:#16a34a; }
+.kc-icon.c  { background:#ecfeff; color:#0891b2; }
+.kc-icon.o  { background:#fff7ed; color:#ea580c; }
+.kc-lbl  { font-size:.58rem; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:.06em; }
+.kc-val  { font-size:1.2rem; font-weight:800; color:#0f172a; line-height:1; letter-spacing:-.03em; }
+.kc-sub  { font-size:.6rem; color:#94a3b8; display:flex; align-items:center; gap:2px; margin-top:2px; }
+.kc-sub.up { color:#16a34a; } .kc-sub.dn { color:#dc2626; }
+
+/* ── CHARTS row ──────────────────────────────────────────── */
+.chart-row {
+  display: grid;
+  grid-template-columns: 2.2fr 1fr 1fr;
+  gap: 8px;
+  min-height: 0;
+  flex: 0 0 auto;
+}
+@media (max-width:1100px) { .chart-row { grid-template-columns: 1.4fr 1fr; } }
+@media (max-width:768px)  { .chart-row { grid-template-columns: 1fr; } }
+
+/* ── BOTTOM row ──────────────────────────────────────────── */
+.btm-row {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr 1fr;
+  gap: 8px;
+  min-height: 0;
+  flex: 1 1 0;    /* takes remaining space */
+}
+@media (max-width:1100px) { .btm-row { grid-template-columns: 1fr 1fr; } }
+@media (max-width:768px)  { .btm-row { grid-template-columns: 1fr; } }
+
+/* ── Panel shared ────────────────────────────────────────── */
+.pn {
+  background:#fff; border:1px solid #e8eef5;
+  border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,.05);
+  overflow:hidden; display:flex; flex-direction:column;
+}
+.pn-hd {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:8px 12px; border-bottom:1px solid #f1f5f9; flex-shrink:0;
+}
+.pn-ttl {
+  font-size:.75rem; font-weight:700; color:#0f172a;
+  display:flex; align-items:center; gap:5px; margin:0; letter-spacing:-.01em;
+}
+.pn-bd { padding:10px 12px; }
+.pn-scroll { overflow-y:auto; flex:1; min-height:0; }
+.pn-scroll::-webkit-scrollbar { width:3px; }
+.pn-scroll::-webkit-scrollbar-thumb { background:#e2e8f0; border-radius:99px; }
+
+/* ── Compact table ───────────────────────────────────────── */
+.ct thead th {
+  font-size:.6rem; background:#f8fafc; color:#475569;
+  font-weight:700; text-transform:uppercase; letter-spacing:.05em;
+  padding:5px 10px; border-bottom:1px solid #e8eef5;
+  position:sticky; top:0; z-index:1;
+}
+.ct td { padding:5px 10px; font-size:.73rem; border-color:#f8fafc; }
+.ct tbody tr:nth-child(even) { background:#fafbfc; }
+.ct tbody tr:hover { background:#f0f7ff !important; }
+
+/* ── Activity/stock rows ─────────────────────────────────── */
+.xr {
+  display:flex; align-items:center; padding:5px 12px;
+  border-bottom:1px solid #f8fafc; gap:8px; transition:background .12s;
+}
+.xr:last-child { border-bottom:none; }
+.xr:hover { background:#f8fafc; }
+.xdot {
+  width:26px; height:26px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:.72rem; flex-shrink:0;
+}
+
+/* ── Progress ────────────────────────────────────────────── */
+.prg { height:4px; border-radius:99px; overflow:hidden; background:#f1f5f9; }
+
+/* ── Legend dot ──────────────────────────────────────────── */
+.ld  { width:7px; height:7px; border-radius:50%; display:inline-block; flex-shrink:0; }
+
+/* ── Quick actions ───────────────────────────────────────── */
+.qa-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:5px; }
+.qab {
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:3px; padding:7px 4px; border-radius:8px; text-decoration:none;
+  font-size:.63rem; font-weight:700; transition:all .18s; border:1.5px solid transparent;
+}
+.qab:hover { transform:translateY(-2px); text-decoration:none; }
+.qab i { font-size:1rem; }
+.qab.qp { background:#eff6ff; color:#2563eb; border-color:#bfdbfe; } .qab.qp:hover { background:#2563eb; color:#fff; }
+.qab.qs { background:#f0fdf4; color:#16a34a; border-color:#bbf7d0; } .qab.qs:hover { background:#16a34a; color:#fff; }
+.qab.qv { background:#faf5ff; color:#7c3aed; border-color:#ddd6fe; } .qab.qv:hover { background:#7c3aed; color:#fff; }
+.qab.ql { background:#f8fafc; color:#475569; border-color:#e2e8f0; } .qab.ql:hover { background:#475569; color:#fff; }
+.qab.qr { background:#fef2f2; color:#dc2626; border-color:#fecaca; } .qab.qr:hover { background:#dc2626; color:#fff; }
+
+/* bp badge */
+.bp { border-radius:99px !important; padding:.2em .55em !important; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ══ ROW 1: WELCOME + QUICK ACTIONS ══════════════════════ -->
+<div class="row1">
+
+  <!-- Welcome banner -->
+  <div class="wb">
+    <div class="d-flex align-items-start justify-content-between gap-2">
+      <div>
+        <div class="wb-greet">{% trans "Welcome back" %}</div>
+        <div class="wb-name">{{ user.full_name }}</div>
+        <!-- <div class="wb-sub">{{ user.get_role_name|default:"No Role" }} · EIAMS Enterprise</div> -->
+        <div class="wb-sub">{{ user.get_role_name|default:"No Role" }} · EIAMS Enterprise គឺជាប្រព័ន្ធគ្រប់គ្រងសារពើភណ្ឌ និងទ្រព្យសម្បត្តិដែលមានលក្ខណៈវិជ្ជាជីវៈ សម្រាប់ក្រុមហ៊ុន ស្ថាប័ន ឬអង្គភាព ដើម្បីគ្រប់គ្រងស្តុកទំនិញ ទ្រព្យសម្បត្តិ អ្នកផ្គត់ផ្គង់ ការទិញ ការចែកចាយ និងរបាយការណ៍ប្រកបដោយប្រសិទ្ធភាព តាមរយៈ Dashboard ទំនើប មានសុវត្ថិភាព និងងាយស្រួលប្រើប្រាស់។</div>
+      </div>
+      <div class="text-end flex-shrink-0">
+        <div class="wb-date"><i class="bi bi-calendar3 me-1"></i>{% now "l, N j, Y" %}</div>
+        <div class="wb-date mt-1"><i class="bi bi-clock me-1"></i>{% now "P" %}</div>
+        {% if open_alerts > 0 %}
+        <div class="mt-1">
+          <span class="badge bp" style="background:rgba(239,68,68,.25);color:#fff;border:1px solid rgba(255,255,255,.3);font-size:.6rem;">
+            <i class="bi bi-exclamation-triangle-fill me-1"></i>{{ open_alerts }} alert{{ open_alerts|pluralize }}
+          </span>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="pn">
+    <div class="pn-hd">
+      <h6 class="pn-ttl"><i class="bi bi-lightning-charge-fill text-warning"></i>{% trans "Quick Actions" %}</h6>
+    </div>
+    <div class="pn-bd" style="padding:8px;">
+      <div class="qa-grid">
+        <a href="{% url 'inventory:item_create' %}"     class="qab qp"><i class="bi bi-box-seam"></i>{% trans "Add Item" %}</a>
+        <a href="{% url 'stock:movement_create' %}"     class="qab qs"><i class="bi bi-plus-slash-minus"></i>{% trans "Stock Move" %}</a>
+        <a href="{% url 'assets:asset_create' %}"       class="qab qv"><i class="bi bi-pc-display"></i>{% trans "Add Asset" %}</a>
+        <a href="{% url 'reports:index' %}"             class="qab ql"><i class="bi bi-bar-chart-line"></i>{% trans "Reports" %}</a>
+        <a href="{% url 'inventory:supplier_create' %}" class="qab ql"><i class="bi bi-truck"></i>{% trans "Supplier" %}</a>
+        <a href="{% url 'stock:alert_list' %}"          class="qab qr">
+          <i class="bi bi-bell"></i>{% trans "Alerts" %}{% if open_alerts %}<span class="badge bg-danger bp ms-1" style="font-size:.5rem;">{{ open_alerts }}</span>{% endif %}
+        </a>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /ROW 1 -->
+
+<!-- ══ ROW 2: KPI CARDS ═════════════════════════════════════ -->
+<div class="kpi-strip">
+
+  <a href="{% url 'inventory:item_list' %}" class="kc kb" aria-label="Total items {{ total_items }}">
+    <div class="kc-icon b"><i class="bi bi-box-seam-fill"></i></div>
+    <div>
+      <div class="kc-lbl">{% trans "Total Items" %}</div>
+      <div class="kc-val">{{ total_items|intcomma }}</div>
+      <div class="kc-sub"><i class="bi bi-layers"></i>{{ total_categories }} categories</div>
+    </div>
+  </a>
+
+  <a href="{% url 'assets:asset_list' %}" class="kc kp" aria-label="Total assets {{ total_assets }}">
+    <div class="kc-icon p"><i class="bi bi-pc-display-horizontal"></i></div>
+    <div>
+      <div class="kc-lbl">{% trans "Total Assets" %}</div>
+      <div class="kc-val">{{ total_assets|intcomma }}</div>
+      <div class="kc-sub up"><i class="bi bi-check-circle-fill"></i>{{ available_assets }} available</div>
+    </div>
+  </a>
+
+  <a href="{% url 'stock:alert_list' %}" class="kc {% if low_stock_items > 0 %}kr{% else %}kg{% endif %}" aria-label="Low stock {{ low_stock_items }}">
+    <div class="kc-icon {% if low_stock_items > 0 %}r{% else %}g{% endif %}"><i class="bi bi-exclamation-triangle-fill"></i></div>
+    <div>
+      <div class="kc-lbl">{% trans "Low Stock" %}</div>
+      <div class="kc-val">{{ low_stock_items|intcomma }}</div>
+      <div class="kc-sub {% if open_alerts > 0 %}dn{% endif %}"><i class="bi bi-bell"></i>{{ open_alerts }} alerts</div>
+    </div>
+  </a>
+
+  <a href="{% url 'reports:inventory' %}" class="kc kg" aria-label="Inventory value">
+    <div class="kc-icon g"><i class="bi bi-wallet2"></i></div>
+    <div>
+      <div class="kc-lbl">{% trans "Inv Value" %}</div>
+      <div class="kc-val" style="font-size:.95rem;">${{ total_inv_value|floatformat:0|intcomma }}</div>
+      <div class="kc-sub"><i class="bi bi-truck"></i>{{ total_suppliers }} suppliers</div>
+    </div>
+  </a>
+
+  <a href="{% url 'stock:movement_list' %}" class="kc kc2" aria-label="Movements {{ monthly_movements }}">
+    <div class="kc-icon c"><i class="bi bi-arrow-left-right"></i></div>
+    <div>
+      <div class="kc-lbl">{% trans "Movements" %}</div>
+      <div class="kc-val">{{ monthly_movements }}</div>
+      <div class="kc-sub"><i class="bi bi-calendar3"></i>Last 30 days</div>
+    </div>
+  </a>
+
+  <a href="{% url 'assets:maintenance_list' %}" class="kc ko" aria-label="Maintenance {{ maintenance_assets }}">
+    <div class="kc-icon o"><i class="bi bi-tools"></i></div>
+    <div>
+      <div class="kc-lbl">{% trans "Maintenance" %}</div>
+      <div class="kc-val">{{ maintenance_assets }}</div>
+      <div class="kc-sub"><i class="bi bi-shield-exclamation"></i>{{ expiring_soon|length }} expiring</div>
+    </div>
+  </a>
+
+</div><!-- /ROW 2 -->
+
+<!-- ══ ROW 3: CHARTS ════════════════════════════════════════ -->
+<div class="chart-row">
+
+  <!-- Stock bar chart -->
+  <div class="pn">
+    <div class="pn-hd">
+      <h6 class="pn-ttl"><i class="bi bi-bar-chart-fill text-primary"></i>{% trans "Stock Activity — Last 7 Days" %}</h6>
+      <div class="d-flex align-items-center gap-2">
+        <span class="d-flex align-items-center gap-1" style="font-size:.6rem;"><span class="ld" style="background:#16a34a;"></span><span class="text-muted">IN</span></span>
+        <span class="d-flex align-items-center gap-1" style="font-size:.6rem;"><span class="ld" style="background:#dc2626;"></span><span class="text-muted">OUT</span></span>
+        <a href="{% url 'stock:movement_list' %}" class="btn btn-xs btn-outline-primary ms-1" style="font-size:.6rem;padding:2px 7px;">{% trans "All" %}</a>
+      </div>
+    </div>
+    <div class="pn-bd" style="padding:8px 12px 6px;">
+      <canvas id="stockChart" height="90" role="img" aria-label="Stock activity chart"></canvas>
+    </div>
+  </div>
+
+  <!-- Category doughnut -->
+  <div class="pn">
+    <div class="pn-hd">
+      <h6 class="pn-ttl"><i class="bi bi-pie-chart-fill" style="color:#7c3aed;"></i>{% trans "Categories" %}</h6>
+    </div>
+    <div class="pn-bd" style="padding:6px 10px;">
+      {# Inject per-dot colors as a scoped style block — no template tags inside CSS values #}
+      <style>
+        {% for label,count,color in cat_data %}.cat-dot-{{ forloop.counter }}{background:{{ color }};}
+        {% endfor %}
+      </style>
+      <div class="d-flex align-items-center gap-2">
+        <canvas id="catChart" width="72" height="72" style="flex-shrink:0;" role="img" aria-label="Category distribution"></canvas>
+        <div style="font-size:.63rem;min-width:0;flex:1;">
+          {% for label,count,color in cat_data %}
+          <div class="d-flex align-items-center justify-content-between mb-1">
+            <span class="d-flex align-items-center gap-1 text-muted text-truncate">
+              <span class="ld cat-dot-{{ forloop.counter }}"></span>{{ label|truncatechars:12 }}
+            </span>
+            <span class="fw-bold ms-1" style="color:#0f172a;font-size:.6rem;">{{ count }}</span>
+          </div>
+          {% empty %}<span class="text-muted" style="font-size:.65rem;">{% trans "No data" %}</span>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Asset status -->
+  <div class="pn">
+    <div class="pn-hd">
+      <h6 class="pn-ttl"><i class="bi bi-diagram-3-fill text-primary"></i>{% trans "Asset Status" %}</h6>
+      <a href="{% url 'assets:asset_list' %}" class="btn btn-xs btn-outline-primary" style="font-size:.6rem;padding:2px 7px;">{% trans "All" %}</a>
+    </div>
+    <div class="pn-bd">
+      {% if total_assets > 0 %}
+      <div class="d-flex flex-column gap-2" style="margin-top:2px;">
+        {% for label,count,pct_val,clr in asset_status_rows %}
+        <div>
+          <div class="d-flex justify-content-between mb-1" style="font-size:.67rem;">
+            <span class="d-flex align-items-center gap-1 text-muted">
+              <span class="ld" style="background:{{ clr }};"></span>{{ label }}
+            </span>
+            <strong style="color:#0f172a;">{{ count }} <span class="fw-normal text-muted">({{ pct_val }}%)</span></strong>
+          </div>
+          <div class="prg" role="progressbar" aria-valuenow="{{ pct_val }}" aria-valuemin="0" aria-valuemax="100">
+            <div style="width:{{ pct_val }}%;height:4px;border-radius:99px;background:{{ clr }};transition:width .6s;"></div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="text-center text-muted py-2" style="font-size:.72rem;">
+        <i class="bi bi-inbox d-block mb-1 opacity-25"></i>{% trans "No assets" %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div><!-- /ROW 3 -->
+
+<!-- ══ ROW 4: RECENT MOVEMENTS | LOW STOCK | WARRANTY+SUPPLIERS ═ -->
+<div class="btm-row">
+
+  <!-- Recent Movements -->
+  <div class="pn">
+    <div class="pn-hd">
+      <h6 class="pn-ttl"><i class="bi bi-arrow-left-right text-primary"></i>{% trans "Recent Movements" %}</h6>
+      <a href="{% url 'stock:movement_create' %}" class="btn btn-xs btn-success" style="font-size:.6rem;padding:2px 7px;" aria-label="Add movement">
+        <i class="bi bi-plus-lg"></i>
+      </a>
+    </div>
+    <div class="pn-scroll">
+      <table class="table ct mb-0" aria-label="Recent stock movements">
+        <thead>
+          <tr>
+            <th scope="col">{% trans "Item" %}</th>
+            <th scope="col">{% trans "Type" %}</th>
+            <th scope="col" class="text-end">{% trans "Qty" %}</th>
+            <th scope="col">{% trans "Date" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for m in recent_movements %}
+          <tr>
+            <td>
+              <a href="{% url 'inventory:item_detail' m.item.pk %}" class="fw-semibold text-decoration-none" style="color:#1e293b;">
+                {{ m.item.item_name|truncatechars:17 }}
+              </a>
+              <div style="font-size:.57rem;color:#94a3b8;font-family:monospace;">{{ m.item.item_code }}</div>
+            </td>
+            <td>
+              {% if m.movement_type == 'Stock IN' or m.movement_type == 'Purchase' %}
+                <span class="badge bp" style="background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;font-size:.58rem;">↓ {{ m.movement_type }}</span>
+              {% elif m.movement_type == 'Adjustment' %}
+                <span class="badge bp" style="background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;font-size:.58rem;">⇆ {{ m.movement_type }}</span>
+              {% else %}
+                <span class="badge bp" style="background:#fef2f2;color:#dc2626;border:1px solid #fecaca;font-size:.58rem;">↑ {{ m.movement_type }}</span>
+              {% endif %}
+            </td>
+            <td class="text-end fw-bold">{{ m.quantity }}</td>
+            <td class="text-muted" style="white-space:nowrap;">{{ m.movement_date|date:"M j, H:i" }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="4" class="text-center text-muted py-3" style="font-size:.72rem;">
+            <i class="bi bi-inbox d-block mb-1 opacity-25"></i>{% trans "No movements" %}
+          </td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="pn-hd border-top-0" style="border-top:1px solid #f1f5f9;padding:5px 12px;flex-shrink:0;">
+      <a href="{% url 'stock:movement_list' %}" class="text-primary" style="font-size:.65rem;">{% trans "View all" %} →</a>
+      <span class="text-muted" style="font-size:.6rem;">{% trans "Latest 8" %}</span>
+    </div>
+  </div>
+
+  <!-- Low Stock -->
+  <div class="pn">
+    <div class="pn-hd">
+      <h6 class="pn-ttl"><i class="bi bi-exclamation-triangle-fill text-danger"></i>{% trans "Low Stock" %}</h6>
+      <a href="{% url 'stock:alert_list' %}" class="btn btn-xs btn-outline-danger" style="font-size:.6rem;padding:2px 7px;">
+        {% if open_alerts %}<span class="badge bg-danger bp me-1" style="font-size:.5rem;">{{ open_alerts }}</span>{% endif %}{% trans "Alerts" %}
+      </a>
+    </div>
+    <div class="pn-scroll">
+      {% for item in low_stock_list %}
+      <div class="xr">
+        <div style="min-width:0;flex:1;margin-right:6px;">
+          <div class="fw-semibold text-truncate" style="font-size:.7rem;color:#1e293b;">{{ item.item_name }}</div>
+          <div class="text-muted" style="font-size:.58rem;">{{ item.category.category_name }}</div>
+        </div>
+        <div class="text-end flex-shrink-0">
+          {% if item.current_qty == 0 %}
+            <span class="badge bp" style="background:#fef2f2;color:#dc2626;border:1px solid #fecaca;font-size:.57rem;">{% trans "Out" %}</span>
+          {% else %}
+            <span class="badge bp" style="background:#fff7ed;color:#d97706;border:1px solid #fed7aa;font-size:.57rem;">{{ item.current_qty }}/{{ item.min_qty }}</span>
+          {% endif %}
+        </div>
+      </div>
+      {% empty %}
+      <div class="text-center text-muted py-3" style="font-size:.72rem;">
+        <i class="bi bi-check-circle-fill text-success d-block mb-1"></i>{% trans "All healthy" %}
+      </div>
+      {% endfor %}
+    </div>
+    {% if low_stock_list %}
+    <div style="padding:5px 12px;border-top:1px solid #f1f5f9;flex-shrink:0;">
+      <a href="{% url 'inventory:item_list' %}?stock=low" class="text-danger" style="font-size:.65rem;">{% trans "View all" %} →</a>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Warranty + Top Suppliers stacked -->
+  <div class="d-flex flex-column gap-2" style="min-height:0;">
+
+    <!-- Warranty Expiring -->
+    <div class="pn" style="flex:1;min-height:0;">
+      <div class="pn-hd">
+        <h6 class="pn-ttl"><i class="bi bi-shield-exclamation text-warning"></i>{% trans "Warranty Expiring" %}</h6>
+        <span class="badge bp" style="background:#fff7ed;color:#ea580c;border:1px solid #fed7aa;font-size:.55rem;">{% trans "60 days" %}</span>
+      </div>
+      <div class="pn-scroll">
+        {% for asset in expiring_soon %}
+        <div class="xr">
+          <div class="xdot" style="background:#fff7ed;color:#ea580c;"><i class="bi bi-shield-x" style="font-size:.65rem;"></i></div>
+          <div style="flex:1;min-width:0;">
+            <div class="fw-semibold text-truncate" style="font-size:.68rem;color:#1e293b;">{{ asset.asset_name }}</div>
+            <div class="text-muted" style="font-size:.57rem;">{{ asset.asset_code }}</div>
+          </div>
+          <div style="font-size:.65rem;color:#ea580c;font-weight:700;flex-shrink:0;">{{ asset.warranty_expiry_date|date:"M j" }}</div>
+        </div>
+        {% empty %}
+        <div class="text-center text-muted py-2" style="font-size:.68rem;">
+          <i class="bi bi-shield-check text-success d-block mb-1"></i>{% trans "None expiring" %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Top Suppliers -->
+    <div class="pn" style="flex:1;min-height:0;">
+      <div class="pn-hd">
+        <h6 class="pn-ttl"><i class="bi bi-truck-front-fill text-primary"></i>{% trans "Top Suppliers" %}</h6>
+        <a href="{% url 'inventory:supplier_list' %}" class="btn btn-xs btn-outline-secondary" style="font-size:.6rem;padding:2px 7px;">{% trans "All" %}</a>
+      </div>
+      <div class="pn-scroll">
+        {% for s in top_suppliers %}
+        <div class="xr">
+          <div class="xdot" style="background:#eff6ff;color:#2563eb;font-size:.6rem;font-weight:800;">{{ forloop.counter }}</div>
+          <div style="flex:1;min-width:0;">
+            <a href="{% url 'inventory:supplier_detail' s.pk %}" class="fw-semibold text-truncate d-block text-decoration-none" style="font-size:.68rem;color:#1e293b;">
+              {{ s.supplier_name }}
+            </a>
+          </div>
+          <span class="badge bp" style="background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;font-size:.57rem;">{{ s.items }}</span>
+        </div>
+        {% empty %}
+        <div class="text-center text-muted py-2" style="font-size:.68rem;">
+          <i class="bi bi-truck d-block mb-1 opacity-25"></i>{% trans "No suppliers" %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>
+
+</div><!-- /ROW 4 -->
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function(){
+  'use strict';
+
+  /* topbar scroll shadow */
+  const scroller = document.getElementById('mainScroll');
+  const topbar   = document.getElementById('topbar');
+  if (scroller && topbar) {
+    scroller.addEventListener('scroll', function(){
+      topbar.classList.toggle('scrolled', this.scrollTop > 4);
+    }, { passive: true });
+  }
+
+  /* Stock bar chart */
+  const sCtx = document.getElementById('stockChart');
+  if (sCtx) {
+    new Chart(sCtx, {
+      type: 'bar',
+      data: {
+        labels: {{ chart_labels|safe }},
+        datasets: [
+          { label:'IN',  data:{{ chart_in|safe }},  backgroundColor:'rgba(22,163,74,.75)',  borderRadius:3, borderSkipped:false },
+          { label:'OUT', data:{{ chart_out|safe }}, backgroundColor:'rgba(220,38,38,.65)', borderRadius:3, borderSkipped:false }
+        ]
+      },
+      options: {
+        responsive:true, maintainAspectRatio:true,
+        plugins:{
+          legend:{ display:false },
+          tooltip:{ mode:'index', intersect:false, backgroundColor:'#0f172a', titleColor:'#94a3b8', bodyColor:'#f1f5f9', padding:8, cornerRadius:7 }
+        },
+        scales:{
+          x:{ grid:{ display:false }, ticks:{ font:{ size:8 }, color:'#94a3b8' }, border:{ display:false } },
+          y:{ beginAtZero:true, ticks:{ precision:0, font:{ size:8 }, color:'#94a3b8' }, grid:{ color:'rgba(0,0,0,.04)' }, border:{ display:false } }
+        }
+      }
+    });
+  }
+
+  /* Category doughnut */
+  const cCtx = document.getElementById('catChart');
+  if (cCtx) {
+    const vals = {{ cat_values|safe }};
+    if (vals && vals.length) {
+      new Chart(cCtx, {
+        type:'doughnut',
+        data:{
+          labels:{{ cat_labels|safe }},
+          datasets:[{ data:vals, backgroundColor:{{ cat_colors|safe }}, borderWidth:2, borderColor:'#fff', hoverOffset:5 }]
+        },
+        options:{
+          responsive:false, cutout:'70%',
+          plugins:{
+            legend:{ display:false },
+            tooltip:{ backgroundColor:'#0f172a', titleColor:'#94a3b8', bodyColor:'#f1f5f9', padding:7, cornerRadius:7, callbacks:{ label:c=>` ${c.label}: ${c.parsed}` } }
+          }
+        }
+      });
+    }
+  }
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1><i class="bi bi-bar-chart-line me-2 text-primary"></i>Reports</h1>
+    <nav aria-label="breadcrumb"><ol class="breadcrumb">
+      <li class="breadcrumb-item active">Reports</li>
+    </ol></nav>
+  </div>
+</div>
+
+<div class="row g-4">
+
+  <!-- Inventory Report -->
+  <div class="col-sm-6 col-xl-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body text-center p-4">
+        <div class="stat-icon blue mx-auto mb-3" style="width:56px;height:56px;font-size:1.5rem;">
+          <i class="bi bi-box-seam"></i>
+        </div>
+        <h5 class="fw-bold mb-1">Inventory Report</h5>
+        <p class="text-muted small mb-3">Stock levels, values and category breakdown.</p>
+        <a href="{% url 'reports:inventory' %}" class="btn btn-primary btn-sm w-100">
+          <i class="bi bi-eye me-1"></i>View Report
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stock Movement Report -->
+  <div class="col-sm-6 col-xl-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body text-center p-4">
+        <div class="stat-icon green mx-auto mb-3" style="width:56px;height:56px;font-size:1.5rem;">
+          <i class="bi bi-arrow-left-right"></i>
+        </div>
+        <h5 class="fw-bold mb-1">Stock Movement</h5>
+        <p class="text-muted small mb-3">History of all stock in/out transactions by date range.</p>
+        <a href="{% url 'reports:stock' %}" class="btn btn-success btn-sm w-100">
+          <i class="bi bi-eye me-1"></i>View Report
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Asset Report -->
+  <div class="col-sm-6 col-xl-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body text-center p-4">
+        <div class="stat-icon purple mx-auto mb-3" style="width:56px;height:56px;font-size:1.5rem;">
+          <i class="bi bi-pc-display"></i>
+        </div>
+        <h5 class="fw-bold mb-1">Asset Report</h5>
+        <p class="text-muted small mb-3">Asset status, assignment and lifecycle overview.</p>
+        <a href="{% url 'reports:assets' %}" class="btn btn-outline-primary btn-sm w-100">
+          <i class="bi bi-eye me-1"></i>View Report
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Low Stock Report -->
+  <div class="col-sm-6 col-xl-3">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body text-center p-4">
+        <div class="stat-icon red mx-auto mb-3" style="width:56px;height:56px;font-size:1.5rem;">
+          <i class="bi bi-exclamation-triangle"></i>
+        </div>
+        <h5 class="fw-bold mb-1">Low Stock Report</h5>
+        <p class="text-muted small mb-3">Items currently at or below their minimum quantity threshold.</p>
+        <a href="{% url 'reports:low_stock' %}" class="btn btn-danger btn-sm w-100">
+          <i class="bi bi-eye me-1"></i>View Report
+        </a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}

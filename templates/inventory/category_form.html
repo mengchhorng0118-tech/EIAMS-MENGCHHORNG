@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1><i class="bi bi-tag me-2 text-primary"></i>{{ page_title }}</h1>
+    <nav aria-label="breadcrumb"><ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{% url 'inventory:category_list' %}">Categories</a></li>
+      <li class="breadcrumb-item active">{{ action }}</li>
+    </ol></nav>
+  </div>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header"><h6 class="mb-0">{{ page_title }}</h6></div>
+      <div class="card-body">
+        <form method="post">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label">Category Name <span class="text-danger">*</span></label>
+            {{ form.category_name }}
+            {% if form.category_name.errors %}<div class="text-danger mt-1" style="font-size:.8rem;">{{ form.category_name.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Category Type <span class="text-danger">*</span></label>
+            {{ form.category_type }}
+            {% if form.category_type.errors %}<div class="text-danger mt-1" style="font-size:.8rem;">{{ form.category_type.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Description</label>
+            {{ form.description }}
+          </div>
+          <div class="mb-4">
+            <label class="form-label">Status</label>
+            {{ form.status }}
+          </div>
+          {% if form.non_field_errors %}
+          <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+          {% endif %}
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>{{ action }}</button>
+            <a href="{% url 'inventory:category_list' %}" class="btn btn-outline-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

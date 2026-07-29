@@ -1,0 +1,413 @@
+# Khmer (km) Translation for EIAMS
+# Copyright (C) 2026 BIU Y3S1IT
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: km\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+# ── Navigation ────────────────────────────────────────────
+msgid "Dashboard"
+msgstr "ផ្ទាំងគ្រប់គ្រង"
+
+msgid "Inventory"
+msgstr "សារពើភ័ណ្ឌ"
+
+msgid "Items"
+msgstr "ទំនិញ"
+
+msgid "Categories"
+msgstr "ប្រភេទ"
+
+msgid "Locations"
+msgstr "ទីតាំង"
+
+msgid "Suppliers"
+msgstr "អ្នកផ្គត់ផ្គង់"
+
+msgid "Stock"
+msgstr "ស្តុក"
+
+msgid "Movements"
+msgstr "ចលនាស្តុក"
+
+msgid "Low Stock Alerts"
+msgstr "ព្រឹត្តិការណ៍ស្តុកទាប"
+
+msgid "Assets"
+msgstr "ទ្រព្យសម្បត្តិ"
+
+msgid "Transfers"
+msgstr "ការផ្ទេរ"
+
+msgid "Maintenance"
+msgstr "ការថែទាំ"
+
+msgid "Disposals"
+msgstr "ការបោះចោល"
+
+msgid "Audit Logs"
+msgstr "កំណត់ហេតុពិនិត្យ"
+
+msgid "Reports"
+msgstr "របាយការណ៍"
+
+msgid "Users"
+msgstr "អ្នកប្រើប្រាស់"
+
+msgid "Notifications"
+msgstr "ការជូនដំណឹង"
+
+msgid "Django Admin"
+msgstr "គ្រប់គ្រង Django"
+
+# ── Auth ─────────────────────────────────────────────────
+msgid "Sign In"
+msgstr "ចូលប្រព័ន្ធ"
+
+msgid "Sign Out"
+msgstr "ចេញពីប្រព័ន្ធ"
+
+msgid "Welcome Back"
+msgstr "សូមស្វាគមន៍មកវិញ"
+
+msgid "Sign in to EIAMS to continue"
+msgstr "ចូលប្រព័ន្ធ EIAMS ដើម្បីបន្ត"
+
+msgid "Username"
+msgstr "ឈ្មោះអ្នកប្រើ"
+
+msgid "Password"
+msgstr "លេខសម្ងាត់"
+
+msgid "Remember me"
+msgstr "ចងចាំខ្ញុំ"
+
+msgid "My Profile"
+msgstr "ប្រវត្តិរូបរបស់ខ្ញុំ"
+
+msgid "Change Password"
+msgstr "ផ្លាស់ប្ដូរលេខសម្ងាត់"
+
+msgid "Current Password"
+msgstr "លេខសម្ងាត់បច្ចុប្បន្ន"
+
+msgid "New Password"
+msgstr "លេខសម្ងាត់ថ្មី"
+
+msgid "Confirm New Password"
+msgstr "បញ្ជាក់លេខសម្ងាត់ថ្មី"
+
+# ── Dashboard ─────────────────────────────────────────────
+msgid "Total Items"
+msgstr "ទំនិញសរុប"
+
+msgid "Total Assets"
+msgstr "ទ្រព្យសម្បត្តិសរុប"
+
+msgid "Inventory Value"
+msgstr "តម្លៃសារពើភ័ណ្ឌ"
+
+msgid "Under Maintenance"
+msgstr "កំពុងថែទាំ"
+
+msgid "Recent Stock Movements"
+msgstr "ចលនាស្តុកថ្មីៗ"
+
+msgid "Low Stock Items"
+msgstr "ទំនិញស្តុកទាប"
+
+msgid "Asset Status Overview"
+msgstr "ទិដ្ឋភាពស្ថានភាពទ្រព្យ"
+
+msgid "Available"
+msgstr "អាចប្រើបាន"
+
+msgid "Assigned"
+msgstr "បានប្រគល់ឱ្យ"
+
+msgid "View All"
+msgstr "មើលទាំងអស់"
+
+msgid "All stock levels OK"
+msgstr "ស្តុកទំនិញទាំងអស់គ្រប់គ្រាន់"
+
+# ── Common Actions ────────────────────────────────────────
+msgid "Create"
+msgstr "បង្កើត"
+
+msgid "Update"
+msgstr "កែប្រែ"
+
+msgid "Delete"
+msgstr "លុប"
+
+msgid "Save"
+msgstr "រក្សាទុក"
+
+msgid "Cancel"
+msgstr "បោះបង់"
+
+msgid "Search"
+msgstr "ស្វែងរក"
+
+msgid "Filter"
+msgstr "ត្រង"
+
+msgid "Clear"
+msgstr "សម្អាត"
+
+msgid "Back"
+msgstr "ត្រឡប់ក្រោយ"
+
+msgid "Edit"
+msgstr "កែប្រែ"
+
+msgid "View"
+msgstr "មើល"
+
+msgid "Print"
+msgstr "បោះពុម្ព"
+
+msgid "Add"
+msgstr "បន្ថែម"
+
+msgid "Submit"
+msgstr "ដាក់ស្នើ"
+
+msgid "Approve"
+msgstr "អនុម័ត"
+
+msgid "Resolve"
+msgstr "ដោះស្រាយ"
+
+msgid "Record"
+msgstr "កត់ត្រា"
+
+msgid "Save Changes"
+msgstr "រក្សាទុកការផ្លាស់ប្ដូរ"
+
+msgid "Actions"
+msgstr "សកម្មភាព"
+
+# ── Status ────────────────────────────────────────────────
+msgid "Active"
+msgstr "សកម្ម"
+
+msgid "Inactive"
+msgstr "អសកម្ម"
+
+msgid "Status"
+msgstr "ស្ថានភាព"
+
+msgid "All Status"
+msgstr "ស្ថានភាពទាំងអស់"
+
+msgid "Pending Approval"
+msgstr "រង់ចាំការអនុម័ត"
+
+msgid "Approved"
+msgstr "បានអនុម័ត"
+
+msgid "Rejected"
+msgstr "បានបដិសេធ"
+
+msgid "Resolved"
+msgstr "បានដោះស្រាយ"
+
+msgid "New"
+msgstr "ថ្មី"
+
+# ── Inventory ─────────────────────────────────────────────
+msgid "Item Code"
+msgstr "លេខកូដទំនិញ"
+
+msgid "Item Name"
+msgstr "ឈ្មោះទំនិញ"
+
+msgid "Category"
+msgstr "ប្រភេទ"
+
+msgid "Supplier"
+msgstr "អ្នកផ្គត់ផ្គង់"
+
+msgid "Unit"
+msgstr "ឯកតា"
+
+msgid "Current Quantity"
+msgstr "បរិមាណបច្ចុប្បន្ន"
+
+msgid "Minimum Quantity"
+msgstr "បរិមាណអប្បបរមា"
+
+msgid "Purchase Price"
+msgstr "តម្លៃទិញ"
+
+msgid "Low Stock"
+msgstr "ស្តុកទាប"
+
+msgid "Out of Stock"
+msgstr "អស់ស្តុក"
+
+msgid "Barcode"
+msgstr "បាកូដ"
+
+msgid "Description"
+msgstr "ការពិពណ៌នា"
+
+# ── Assets ────────────────────────────────────────────────
+msgid "Asset Code"
+msgstr "លេខកូដទ្រព្យ"
+
+msgid "Asset Name"
+msgstr "ឈ្មោះទ្រព្យ"
+
+msgid "Serial Number"
+msgstr "លេខស៊េរី"
+
+msgid "Purchase Date"
+msgstr "កាលបរិច្ឆេទទិញ"
+
+msgid "Warranty Expiry"
+msgstr "ផុតកំណត់ធានា"
+
+msgid "Assigned To"
+msgstr "បានប្រគល់ឱ្យ"
+
+msgid "Location"
+msgstr "ទីតាំង"
+
+msgid "Condition"
+msgstr "លក្ខខណ្ឌ"
+
+msgid "Good"
+msgstr "ល្អ"
+
+msgid "Fair"
+msgstr "មធ្យម"
+
+msgid "Poor"
+msgstr "អន់"
+
+msgid "Missing"
+msgstr "បាត់"
+
+msgid "Disposed"
+msgstr "បានបោះចោល"
+
+# ── Stock ─────────────────────────────────────────────────
+msgid "Movement Type"
+msgstr "ប្រភេទចលនា"
+
+msgid "Quantity"
+msgstr "បរិមាណ"
+
+msgid "Reference Number"
+msgstr "លេខយោង"
+
+msgid "Reason"
+msgstr "មូលហេតុ"
+
+msgid "Remarks"
+msgstr "ចំណាំ"
+
+msgid "Stock IN"
+msgstr "ស្តុកចូល"
+
+msgid "Stock OUT"
+msgstr "ស្តុកចេញ"
+
+msgid "Adjustment"
+msgstr "កែតម្រូវ"
+
+msgid "Record Movement"
+msgstr "កត់ត្រាចលនា"
+
+# ── User Management ───────────────────────────────────────
+msgid "Full Name"
+msgstr "នាមពេញ"
+
+msgid "Email"
+msgstr "អ៊ីម៉ែល"
+
+msgid "Role"
+msgstr "តួនាទី"
+
+msgid "Department"
+msgstr "នាយកដ្ឋាន"
+
+msgid "Phone"
+msgstr "ទូរស័ព្ទ"
+
+msgid "Gender"
+msgstr "ភេទ"
+
+msgid "Profile Picture"
+msgstr "រូបភាព"
+
+msgid "Date Joined"
+msgstr "កាលបរិច្ឆេទចូលរួម"
+
+msgid "Last Login"
+msgstr "ចូលប្រព័ន្ធចុងក្រោយ"
+
+msgid "Add User"
+msgstr "បន្ថែមអ្នកប្រើ"
+
+msgid "User Management"
+msgstr "គ្រប់គ្រងអ្នកប្រើ"
+
+# ── Reports ───────────────────────────────────────────────
+msgid "Inventory Report"
+msgstr "របាយការណ៍សារពើភ័ណ្ឌ"
+
+msgid "Stock Movement Report"
+msgstr "របាយការណ៍ចលនាស្តុក"
+
+msgid "Asset Report"
+msgstr "របាយការណ៍ទ្រព្យ"
+
+msgid "Low Stock Report"
+msgstr "របាយការណ៍ស្តុកទាប"
+
+msgid "Generated"
+msgstr "បង្កើតនៅ"
+
+msgid "Total Value"
+msgstr "តម្លៃសរុប"
+
+# ── Messages ──────────────────────────────────────────────
+msgid "saved successfully"
+msgstr "រក្សាទុកបានជោគជ័យ"
+
+msgid "deleted successfully"
+msgstr "លុបបានជោគជ័យ"
+
+msgid "created successfully"
+msgstr "បង្កើតបានជោគជ័យ"
+
+msgid "updated successfully"
+msgstr "កែប្រែបានជោគជ័យ"
+
+msgid "Please correct the errors below."
+msgstr "សូមកែប្រែកំហុសខាងក្រោម។"
+
+msgid "Access denied."
+msgstr "ការចូលប្រើត្រូវបានបដិសេធ។"
+
+msgid "No records found."
+msgstr "រកមិនឃើញកំណត់ត្រា។"
+
+# ── Language Switcher ─────────────────────────────────────
+msgid "Language"
+msgstr "ភាសា"
+
+msgid "English"
+msgstr "អង់គ្លេស"
+
+msgid "ខ្មែរ"
+msgstr "ខ្មែរ"
+
+msgid "Switch Language"
+msgstr "ប្ដូរភាសា"

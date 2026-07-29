@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.dl-row { display:flex; padding:.5rem 0; border-bottom:1px solid #f1f5f9; font-size:.82rem; }
+.dl-row:last-child { border-bottom:none; }
+.dl-label { width:160px; flex-shrink:0; color:#64748b; font-weight:600; }
+.dl-val   { flex:1; color:#0f172a; }
+.timeline-item { display:flex; gap:12px; padding:10px 0; border-bottom:1px solid #f8fafc; font-size:.78rem; }
+.timeline-item:last-child { border-bottom:none; }
+.timeline-dot { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:.7rem; flex-shrink:0; background:#eff6ff; color:#2563eb; }
+.section-card { background:#fff; border:1px solid #e8eef5; border-radius:12px; margin-bottom:16px; overflow:hidden; }
+.section-card .sc-hd { padding:12px 16px; border-bottom:1px solid #f1f5f9; font-weight:700; font-size:.82rem; color:#0f172a; display:flex; align-items:center; gap:6px; }
+.section-card .sc-bd { padding:14px 16px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1><i class="bi bi-arrow-repeat me-2 text-primary"></i>{{ transfer.transfer_number }}</h1>
+    <nav aria-label="breadcrumb"><ol class="breadcrumb mb-0">
+      <li class="breadcrumb-item"><a href="{% url 'dashboard:home' %}">Dashboard</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'assets:transfer_list' %}">Transfers</a></li>
+      <li class="breadcrumb-item active">{{ transfer.transfer_number }}</li>
+    </ol></nav>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    {% if transfer.can_be_edited %}
+    <a href="{% url 'assets:transfer_update' transfer.pk %}" class="btn btn-outline-primary btn-sm">
+      <i class="bi bi-pencil me-1"></i>Edit
+    </a>
+    {% endif %}
+    {% if transfer.is_pending %}
+    <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#approveModal">
+      <i class="bi bi-check-lg me-1"></i>Approve
+    </button>
+    <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#rejectModal">
+      <i class="bi bi-x-lg me-1"></i>Reject
+    </button>
+    {% endif %}
+    {% if transfer.is_approved %}
+    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#completeModal">
+      <i class="bi bi-check2-all me-1"></i>Complete
+    </button>
+    {% endif %}
+    {% if not transfer.is_completed and not transfer.is_rejected %}
+    <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#cancelModal">
+      <i class="bi bi-slash-circle me-1"></i>Cancel
+    </button>
+    {% endif %}
+    <button class="btn btn-sm btn-outline-secondary" onclick="window.print()">
+      <i class="bi bi-printer me-1"></i>Print
+    </button>
+    <a href="{% url 'assets:transfer_list' %}" class="btn btn-sm btn-outline-secondary">
+      <i class="bi bi-arrow-left me-1"></i>Back
+    </a>
+  </div>
+</div>
+
+<!-- Status banner -->
+<div class="alert d-flex align-items-center gap-2 mb-3 py-2" style="border-radius:10px;font-size:.82rem;background:{% if transfer.is_completed %}#f0fdf4;border-color:#bbf7d0;color:#15803d{% elif transfer.is_pending %}#fff7ed;border-color:#fed7aa;color:#c2410c{% elif transfer.is_rejected %}#fef2f2;border-color:#fecaca;color:#dc2626{% elif transfer.is_approved %}#eff6ff;border-color:#bfdbfe;color:#1d4ed8{% else %}#f8fafc;border-color:#e2e8f0;color:#475569{% endif %};">
+  <i class="bi bi-info-circle-fill"></i>
+  <strong>Status: {{ transfer.get_status_display }}</strong>
+  {% if transfer.rejection_reason %} — {{ transfer.rejection_reason }}{% endif %}
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-8">
+
+    <!-- Transfer Info -->
+    <div class="section-card">
+      <div class="sc-hd"><i class="bi bi-arrow-repeat text-primary"></i>Transfer Information</div>
+      <div class="sc-bd">
+        <div class="dl-row"><span class="dl-label">Transfer No</span><span class="dl-val fw-bold">{{ transfer.transfer_number }}</span></div>
+        <div class="dl-row"><span class="dl-label">Asset</span><span class="dl-val"><a href="{% url 'assets:asset_detail' transfer.asset.pk %}">{{ transfer.asset.asset_name }}</a> <span class="text-muted">({{ transfer.asset.asset_code }})</span></span></div>
+        <div class="dl-row"><span class="dl-label">From Location</span><span class="dl-val">{{ transfer.from_location }}</span></div>
+        <div class="dl-row"><span class="dl-label">To Location</span><span class="dl-val">{{ transfer.to_location }}</span></div>
+        <div class="dl-row"><span class="dl-label">Transfer Date</span><span class="dl-val">{{ transfer.transfer_date|date:"N j, Y" }}</span></div>
+        {% if transfer.receive_date %}<div class="dl-row"><span class="dl-label">Receive Date</span><span class="dl-val">{{ transfer.receive_date|date:"N j, Y" }}</span></div>{% endif %}
+        <div class="dl-row"><span class="dl-label">Status</span><span class="dl-val"><span class="badge bg-{{ transfer.status_badge_class }}">{{ transfer.get_status_display }}</span></span></div>
+      </div>
+    </div>
+
+    <!-- People -->
+    <div class="section-card">
+      <div class="sc-hd"><i class="bi bi-people text-primary"></i>People</div>
+      <div class="sc-bd">
+        <div class="dl-row"><span class="dl-label">Requested By</span><span class="dl-val">{{ transfer.requested_by.get_full_name|default:transfer.requested_by.username }}</span></div>
+        <div class="dl-row"><span class="dl-label">Approved By</span><span class="dl-val">{{ transfer.approved_by.get_full_name|default:transfer.approved_by.username|default:"—" }}</span></div>
+        <div class="dl-row"><span class="dl-label">Received By</span><span class="dl-val">{{ transfer.received_by.get_full_name|default:transfer.received_by.username|default:"—" }}</span></div>
+        {% if transfer.approved_at %}<div class="dl-row"><span class="dl-label">Approved At</span><span class="dl-val">{{ transfer.approved_at|date:"N j, Y, P" }}</span></div>{% endif %}
+        {% if transfer.completed_at %}<div class="dl-row"><span class="dl-label">Completed At</span><span class="dl-val">{{ transfer.completed_at|date:"N j, Y, P" }}</span></div>{% endif %}
+      </div>
+    </div>
+
+    <!-- Reason & Notes -->
+    <div class="section-card">
+      <div class="sc-hd"><i class="bi bi-chat-text text-primary"></i>Reason &amp; Notes</div>
+      <div class="sc-bd">
+        <div class="mb-2"><strong style="font-size:.75rem;">REASON</strong><div style="font-size:.82rem;margin-top:4px;">{{ transfer.reason|default:"—" }}</div></div>
+        {% if transfer.notes %}<div><strong style="font-size:.75rem;">NOTES</strong><div style="font-size:.82rem;margin-top:4px;">{{ transfer.notes }}</div></div>{% endif %}
+        {% if transfer.attachment %}<div class="mt-2"><strong style="font-size:.75rem;">ATTACHMENT</strong><div class="mt-1"><a href="{{ transfer.attachment.url }}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="bi bi-paperclip me-1"></i>View Document</a></div></div>{% endif %}
+      </div>
+    </div>
+
+  </div><!-- /col-8 -->
+
+  <div class="col-lg-4">
+    <!-- Timeline / History -->
+    <div class="section-card h-100">
+      <div class="sc-hd"><i class="bi bi-clock-history text-primary"></i>History</div>
+      <div class="sc-bd" style="padding:8px 12px;">
+        {% for h in transfer.history.all %}
+        <div class="timeline-item">
+          <div class="timeline-dot">
+            {% if h.new_status == 'Completed' %}<i class="bi bi-check2-all"></i>
+            {% elif h.new_status == 'Rejected' %}<i class="bi bi-x-lg"></i>
+            {% elif h.new_status == 'Cancelled' %}<i class="bi bi-slash-circle"></i>
+            {% elif h.new_status == 'Approved' %}<i class="bi bi-check-lg"></i>
+            {% else %}<i class="bi bi-circle"></i>{% endif %}
+          </div>
+          <div>
+            <div class="fw-semibold">{{ h.new_status }}</div>
+            <div class="text-muted" style="font-size:.7rem;">
+              {{ h.timestamp|date:"M j, Y H:i" }}
+              {% if h.changed_by %}· {{ h.changed_by.username }}{% endif %}
+            </div>
+            {% if h.notes %}<div class="text-muted mt-1" style="font-size:.7rem;">{{ h.notes }}</div>{% endif %}
+          </div>
+        </div>
+        {% empty %}
+        <div class="text-center text-muted py-3" style="font-size:.78rem;">No history yet.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modals ─────────────────────────────────────────────── -->
+
+<!-- Approve -->
+<div class="modal fade" id="approveModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:420px;">
+    <div class="modal-content">
+      <div class="modal-header"><h6 class="modal-title"><i class="bi bi-check-lg me-2 text-success"></i>Approve Transfer</h6><button class="btn-close" data-bs-dismiss="modal"></button></div>
+      <form method="post" action="{% url 'assets:transfer_approve' transfer.pk %}">{% csrf_token %}
+        <div class="modal-body">
+          <p class="text-muted mb-3" style="font-size:.82rem;">Approve transfer <strong>{{ transfer.transfer_number }}</strong>? The asset will be marked In Transit.</p>
+          <label class="form-label fw-semibold" style="font-size:.8rem;">Approval Notes (optional)</label>
+          <textarea name="notes" class="form-control form-control-sm" rows="2" placeholder="Optional approval notes…"></textarea>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-success btn-sm"><i class="bi bi-check-lg me-1"></i>Approve</button></div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Reject -->
+<div class="modal fade" id="rejectModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:420px;">
+    <div class="modal-content border-danger">
+      <div class="modal-header border-danger bg-danger bg-opacity-10"><h6 class="modal-title text-danger"><i class="bi bi-x-lg me-2"></i>Reject Transfer</h6><button class="btn-close" data-bs-dismiss="modal"></button></div>
+      <form method="post" action="{% url 'assets:transfer_reject' transfer.pk %}">{% csrf_token %}
+        <div class="modal-body">
+          <label class="form-label fw-semibold" style="font-size:.8rem;">Rejection Reason <span class="text-danger">*</span></label>
+          <textarea name="rejection_reason" class="form-control form-control-sm" rows="3" placeholder="Explain why this transfer is being rejected…" required></textarea>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-danger btn-sm"><i class="bi bi-x-lg me-1"></i>Reject</button></div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Complete -->
+<div class="modal fade" id="completeModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:420px;">
+    <div class="modal-content">
+      <div class="modal-header"><h6 class="modal-title"><i class="bi bi-check2-all me-2 text-primary"></i>Complete Transfer</h6><button class="btn-close" data-bs-dismiss="modal"></button></div>
+      <form method="post" action="{% url 'assets:transfer_complete' transfer.pk %}">{% csrf_token %}
+        <div class="modal-body">
+          <div class="mb-2">
+            <label class="form-label fw-semibold" style="font-size:.8rem;">Actual Receive Date <span class="text-danger">*</span></label>
+            <input type="date" name="receive_date" class="form-control form-control-sm" required value="{% now 'Y-m-d' %}">
+          </div>
+          <div>
+            <label class="form-label fw-semibold" style="font-size:.8rem;">Completion Notes</label>
+            <textarea name="notes" class="form-control form-control-sm" rows="2" placeholder="Notes about delivery condition…"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-check2-all me-1"></i>Mark Complete</button></div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Cancel -->
+<div class="modal fade" id="cancelModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:420px;">
+    <div class="modal-content">
+      <div class="modal-header"><h6 class="modal-title"><i class="bi bi-slash-circle me-2"></i>Cancel Transfer</h6><button class="btn-close" data-bs-dismiss="modal"></button></div>
+      <form method="post" action="{% url 'assets:transfer_cancel' transfer.pk %}">{% csrf_token %}
+        <div class="modal-body">
+          <label class="form-label fw-semibold" style="font-size:.8rem;">Cancellation Reason <span class="text-danger">*</span></label>
+          <textarea name="cancellation_reason" class="form-control form-control-sm" rows="3" placeholder="Explain why this transfer is being cancelled…" required></textarea>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Keep Transfer</button><button type="submit" class="btn btn-warning btn-sm"><i class="bi bi-slash-circle me-1"></i>Cancel Transfer</button></div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

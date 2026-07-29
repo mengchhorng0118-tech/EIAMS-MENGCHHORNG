@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% load humanize i18n %}
+{% get_current_language as LANG %}
+{% block title %}Inventory Items{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1><i class="bi bi-box-seam me-2 text-primary"></i>{% trans "Inventory Items" %}</h1>
+    <nav aria-label="breadcrumb"><ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{% url 'dashboard:home' %}">{% trans "Dashboard" %}</a></li>
+      <li class="breadcrumb-item active">{% trans "Items" %}</li>
+    </ol></nav>
+  </div>
+  <div class="d-flex gap-2">
+    {% if low_stock_count %}
+    <a href="?stock=low" class="btn btn-outline-warning">
+      <i class="bi bi-exclamation-triangle me-1"></i>{% trans "Low Stock" %} ({{ low_stock_count }})
+    </a>
+    {% endif %}
+    <a href="{% url 'inventory:item_create' %}" class="btn btn-primary">
+      <i class="bi bi-plus-lg me-1"></i>{% trans "Add Item" %}
+    </a>
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="card mb-3">
+  <div class="card-body py-2">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-md-3">
+        <input type="text" name="q" class="form-control form-control-sm"
+               placeholder="{% trans 'Search code, name, barcode…' %}" value="{{ search_query }}">
+      </div>
+      <div class="col-md-2">
+        <select name="category" class="form-select form-select-sm">
+          <option value="">{% trans "All Categories" %}</option>
+          {% for cat in categories %}
+          <option value="{{ cat.pk }}" {% if cat_filter == cat.pk|stringformat:"s" %}selected{% endif %}>{{ cat.category_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <select name="supplier" class="form-select form-select-sm">
+          <option value="">{% trans "All Suppliers" %}</option>
+          {% for sup in suppliers %}
+          <option value="{{ sup.pk }}" {% if sup_filter == sup.pk|stringformat:"s" %}selected{% endif %}>{{ sup.supplier_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <select name="status" class="form-select form-select-sm">
+          <option value="">{% trans "All Status" %}</option>
+          <option value="Active"   {% if status_filter == 'Active' %}selected{% endif %}>{% trans "Active" %}</option>
+          <option value="Inactive" {% if status_filter == 'Inactive' %}selected{% endif %}>{% trans "Inactive" %}</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <select name="stock" class="form-select form-select-sm">
+          <option value="">{% trans "All Stock" %}</option>
+          <option value="low" {% if stock_filter == 'low' %}selected{% endif %}>{% trans "Low Stock Only" %}</option>
+        </select>
+      </div>
+      <div class="col-auto">
+        <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-search me-1"></i>{% trans "Filter" %}</button>
+        <a href="{% url 'inventory:item_list' %}" class="btn btn-outline-secondary btn-sm ms-1">{% trans "Clear" %}</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Table -->
+<div class="card">
+  <div class="card-header d-flex align-items-center justify-content-between">
+    <h6 class="mb-0">{% trans "Items" %} <span class="badge bg-secondary ms-2">{{ total }}</span></h6>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0 inventory-table">
+      <thead><tr>
+        <th>{% trans "Code / Name" %}</th>
+        <th>{% trans "Category" %}</th>
+        <th class="text-end">{% trans "Qty" %}</th>
+        <th class="text-end">{% trans "Min" %}</th>
+        <th class="text-end">{% trans "Price" %}</th>
+        <th>{% trans "Status" %}</th>
+        <th class="text-end">{% trans "Actions" %}</th>
+      </tr></thead>
+      <tbody>
+        {% for item in page_obj %}
+        <tr>
+          <td class="item-name-cell">
+            <span class="item-code-mono">{{ item.item_code }}</span>
+            <a href="{% url 'inventory:item_detail' item.pk %}">
+              {# Show Khmer name if language=km and Khmer name exists, else English #}
+              {% if LANG == 'km' and item.item_name_km %}
+                <span style="font-family:'Noto Sans Khmer',sans-serif;">{{ item.item_name_km }}</span>
+                <span class="text-muted ms-1" style="font-size:.7rem;">({{ item.item_name }})</span>
+              {% else %}
+                {{ item.item_name }}
+                {% if item.item_name_km %}
+                  <span class="text-muted ms-1" style="font-size:.68rem;font-family:'Noto Sans Khmer',sans-serif;">{{ item.item_name_km }}</span>
+                {% endif %}
+              {% endif %}
+            </a>
+            {% if item.is_low_stock %}
+              <span class="badge bg-danger ms-1" style="font-size:.62rem;">{% trans "Low Stock" %}</span>
+            {% endif %}
+          </td>
+          <td style="font-size:.875rem;">{{ item.category.category_name }}</td>
+          <td class="text-end">
+            <span class="fw-semibold {% if item.is_low_stock %}text-danger{% endif %}">{{ item.current_qty }}</span>
+            <span class="text-muted" style="font-size:.75rem;"> {{ item.unit }}</span>
+          </td>
+          <td class="text-end" style="font-size:.875rem;">{{ item.min_qty }}</td>
+          <td class="text-end" style="font-size:.875rem;">${{ item.purchase_price|floatformat:2 }}</td>
+          <td>
+            <span class="badge {% if item.status == 'Active' %}bg-success{% else %}bg-secondary{% endif %}">
+              {{ item.status }}
+            </span>
+          </td>
+          <td class="text-end">
+            <a href="{% url 'inventory:item_detail' item.pk %}" class="btn btn-sm btn-outline-secondary" title="{% trans 'View' %}"><i class="bi bi-eye"></i></a>
+            <a href="{% url 'inventory:item_update' item.pk %}" class="btn btn-sm btn-outline-primary"   title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
+            <a href="{% url 'inventory:item_delete' item.pk %}" class="btn btn-sm btn-outline-danger"    title="{% trans 'Delete' %}"><i class="bi bi-trash3"></i></a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="text-center text-muted py-5">
+          <i class="bi bi-inbox d-block fs-2 mb-2 opacity-25"></i>{% trans "No items found." %}
+        </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if page_obj.has_other_pages %}
+  <div class="card-footer">{% include "includes/pagination.html" with page_obj=page_obj %}</div>
+  {% endif %}
+</div>
+{% endblock %}

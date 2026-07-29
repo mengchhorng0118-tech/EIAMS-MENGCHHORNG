@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Low Stock Report{% endblock %}
+
+{% block extra_css %}
+<style>
+@media print {
+  .no-print { display: none !important; }
+  .card { border: 1px solid #dee2e6 !important; box-shadow: none !important; }
+}
+.stock-critical { background: #fef2f2 !important; }
+.stock-warning  { background: #fff7ed !important; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header no-print">
+  <div>
+    <h1><i class="bi bi-exclamation-triangle me-2 text-danger"></i>Low Stock Report</h1>
+    <nav aria-label="breadcrumb"><ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{% url 'reports:index' %}">Reports</a></li>
+      <li class="breadcrumb-item active">Low Stock Report</li>
+    </ol></nav>
+  </div>
+  <div class="d-flex gap-2 no-print">
+    <button class="btn btn-outline-secondary btn-sm" onclick="window.print()">
+      <i class="bi bi-printer me-1"></i>Print
+    </button>
+    <a href="{% url 'reports:index' %}" class="btn btn-outline-primary btn-sm">
+      <i class="bi bi-arrow-left me-1"></i>Back
+    </a>
+  </div>
+</div>
+
+<!-- Alert Banner -->
+{% if items %}
+<div class="alert alert-danger d-flex align-items-center gap-2 mb-3" role="alert">
+  <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+  <div>
+    <strong>{{ items.count }} item{{ items.count|pluralize }}</strong> currently at or below minimum stock threshold.
+    Immediate restocking action is recommended.
+  </div>
+</div>
+{% endif %}
+
+<!-- Report Meta -->
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <div class="text-muted small"><i class="bi bi-clock me-1"></i>Generated: {{ generated_at|date:"N j, Y, P" }}</div>
+  <span class="badge bg-danger px-3 py-2">{{ items.count }} Low Stock Item{{ items.count|pluralize }}</span>
+</div>
+
+<!-- Data Table -->
+<div class="card">
+  <div class="card-header d-flex align-items-center justify-content-between">
+    <h6 class="mb-0"><i class="bi bi-list-ul me-2"></i>Items Below Minimum Stock</h6>
+    <a href="{% url 'stock:movement_list' %}" class="btn btn-sm btn-outline-success no-print">
+      <i class="bi bi-plus-lg me-1"></i>Add Stock
+    </a>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Item Code</th>
+            <th>Item Name</th>
+            <th>Category</th>
+            <th>Supplier</th>
+            <th>Unit</th>
+            <th class="text-end">Min Qty</th>
+            <th class="text-end">Current Qty</th>
+            <th class="text-end">Deficit</th>
+            <th class="text-end">Unit Price</th>
+            <th>Urgency</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in items %}
+          {% with deficit=item.min_qty|add:"-"|add:item.current_qty|stringformat:"s" %}
+          <tr class="{% if item.current_qty == 0 %}stock-critical{% else %}stock-warning{% endif %}">
+            <td class="text-muted" style="font-size:.8rem;">{{ forloop.counter }}</td>
+            <td><code>{{ item.item_code }}</code></td>
+            <td class="fw-semibold">{{ item.item_name }}</td>
+            <td>{{ item.category.category_name }}</td>
+            <td>{{ item.supplier.supplier_name|default:"—" }}</td>
+            <td>{{ item.unit }}</td>
+            <td class="text-end fw-semibold">{{ item.min_qty }}</td>
+            <td class="text-end fw-bold text-danger">{{ item.current_qty }}</td>
+            <td class="text-end fw-bold">
+              {% with d=item.min_qty|add:item.current_qty %}
+                {% comment %}compute deficit = min_qty - current_qty{% endcomment %}
+              {% endwith %}
+              —
+            </td>
+            <td class="text-end">${{ item.purchase_price|floatformat:2 }}</td>
+            <td>
+              {% if item.current_qty == 0 %}
+                <span class="badge bg-danger">Out of Stock</span>
+              {% elif item.current_qty <= item.min_qty|divisibleby:2 %}
+                <span class="badge bg-warning text-dark">Critical</span>
+              {% else %}
+                <span class="badge bg-orange text-white" style="background:#f97316;">Low</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endwith %}
+          {% empty %}
+          <tr>
+            <td colspan="11" class="text-center text-success py-4">
+              <i class="bi bi-check-circle-fill d-block fs-3 mb-2"></i>
+              <strong>All stock levels are healthy!</strong>
+              <div class="text-muted small mt-1">No items are currently below minimum threshold.</div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,481 @@
+{% extends "base.html" %}
+{% block title %}My Profile{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Profile Page Styles ─────────────────────────────────── */
+.profile-avatar-wrap {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 1rem;
+}
+.profile-avatar-wrap img,
+.profile-avatar-wrap .avatar-initials {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--bs-primary);
+  box-shadow: 0 4px 16px rgba(var(--bs-primary-rgb), .25);
+}
+.profile-avatar-wrap .avatar-initials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bs-primary);
+  color: #fff;
+  font-size: 2.2rem;
+  font-weight: 700;
+}
+.avatar-upload-btn {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--bs-primary);
+  color: #fff;
+  border: 2px solid #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: .75rem;
+  transition: background .2s;
+}
+.avatar-upload-btn:hover { background: var(--bs-primary-dark, #0a58ca); }
+.profile-stat {
+  text-align: center;
+  padding: .5rem 0;
+}
+.profile-stat .stat-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--bs-primary);
+}
+.profile-stat .stat-label {
+  font-size: .75rem;
+  color: var(--bs-secondary);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+/* Nav tabs */
+.profile-tabs .nav-link {
+  color: var(--bs-secondary);
+  font-weight: 500;
+  padding: .6rem 1.1rem;
+  border-radius: 8px 8px 0 0;
+  border: none;
+}
+.profile-tabs .nav-link.active {
+  color: var(--bs-primary);
+  background: var(--bs-body-bg, #fff);
+  border-bottom: 3px solid var(--bs-primary);
+}
+.profile-tabs .nav-link:hover:not(.active) {
+  background: rgba(var(--bs-primary-rgb),.06);
+}
+/* Danger zone */
+.danger-zone {
+  border: 1.5px solid var(--bs-danger);
+  border-radius: 10px;
+  padding: 1.4rem;
+}
+.danger-zone .dz-title {
+  color: var(--bs-danger);
+  font-weight: 700;
+  font-size: 1rem;
+  margin-bottom: .3rem;
+}
+/* Password strength bar */
+.strength-bar { height: 5px; border-radius: 99px; transition: width .3s, background .3s; }
+/* Info row */
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: .45rem 0;
+  border-bottom: 1px solid var(--bs-border-color-translucent, rgba(0,0,0,.06));
+  font-size: .875rem;
+}
+.info-row:last-child { border-bottom: none; }
+.info-row .info-label { color: var(--bs-secondary); }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- ── Page Header ─────────────────────────────────────── -->
+<div class="page-header">
+  <div>
+    <h1><i class="bi bi-person-circle me-2 text-primary"></i>My Profile</h1>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard:home' %}">Dashboard</a></li>
+        <li class="breadcrumb-item active">My Profile</li>
+      </ol>
+    </nav>
+  </div>
+</div>
+
+<div class="row g-4">
+
+  <!-- ── Left: Profile Card ──────────────────────────────── -->
+  <div class="col-lg-3">
+    <div class="card text-center p-3 h-100">
+
+      <!-- Avatar with upload trigger -->
+      <div class="profile-avatar-wrap">
+        {% if user.profile_pic %}
+          <img id="avatarPreview" src="{{ user.profile_pic.url }}" alt="{{ user.full_name }}">
+        {% else %}
+          <div class="avatar-initials" id="avatarInitials">{{ user.full_name|first|upper }}</div>
+        {% endif %}
+        <label for="avatarFileInput" class="avatar-upload-btn" title="Change photo">
+          <i class="bi bi-camera-fill"></i>
+        </label>
+      </div>
+
+      <h5 class="mb-1 fw-semibold">{{ user.full_name }}</h5>
+      <p class="text-muted mb-2" style="font-size:.825rem;">{{ user.email }}</p>
+      <span class="badge bg-primary mb-3">{{ user.get_role_name }}</span>
+
+      <!-- Stats row -->
+      <div class="row g-0 border rounded mb-3">
+        <div class="col-6 border-end profile-stat">
+          <div class="stat-value">{{ user.date_joined|date:"Y" }}</div>
+          <div class="stat-label">Joined</div>
+        </div>
+        <div class="col-6 profile-stat">
+          <div class="stat-value">
+            <span class="badge {% if user.status == 'Active' %}bg-success{% else %}bg-danger{% endif %} fs-6">
+              {{ user.status }}
+            </span>
+          </div>
+          <div class="stat-label">Status</div>
+        </div>
+      </div>
+
+      <!-- Info rows -->
+      <div class="text-start">
+        <div class="info-row">
+          <span class="info-label"><i class="bi bi-person me-1"></i>Username</span>
+          <strong>{{ user.username }}</strong>
+        </div>
+        <div class="info-row">
+          <span class="info-label"><i class="bi bi-building me-1"></i>Department</span>
+          <span>{{ user.department|default:"—" }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label"><i class="bi bi-phone me-1"></i>Phone</span>
+          <span>{{ user.phone|default:"—" }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label"><i class="bi bi-gender-ambiguous me-1"></i>Gender</span>
+          <span>{{ user.gender|default:"—" }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label"><i class="bi bi-clock me-1"></i>Last login</span>
+          <span style="font-size:.8rem;">{{ user.last_login|date:"d M Y, H:i"|default:"—" }}</span>
+        </div>
+      </div>
+
+    </div>
+  </div><!-- /col -->
+
+  <!-- ── Right: Tabbed Panels ────────────────────────────── -->
+  <div class="col-lg-9">
+    <div class="card">
+
+      <!-- Tab navigation -->
+      <div class="card-header pb-0 bg-transparent border-bottom-0">
+        <ul class="nav profile-tabs" id="profileTabs" role="tablist">
+          <li class="nav-item">
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabEdit" type="button">
+              <i class="bi bi-pencil-square me-1"></i>Edit Profile
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabSecurity" type="button">
+              <i class="bi bi-shield-lock me-1"></i>Security
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link text-danger" data-bs-toggle="tab" data-bs-target="#tabDanger" type="button">
+              <i class="bi bi-exclamation-triangle me-1"></i>Account Actions
+            </button>
+          </li>
+        </ul>
+      </div>
+
+      <div class="card-body tab-content" id="profileTabsContent">
+
+        <!-- ══ TAB 1: Edit Profile ═══════════════════════ -->
+        <div class="tab-pane fade show active" id="tabEdit">
+          <form method="post" enctype="multipart/form-data" id="profileEditForm">
+            {% csrf_token %}
+            <input type="hidden" name="form_type" value="profile">
+
+            <!-- Hidden file input wired to avatar camera btn -->
+            <input type="file" id="avatarFileInput" name="profile_pic"
+                   accept="image/*" class="d-none">
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label fw-medium">
+                  Full Name <span class="text-danger">*</span>
+                </label>
+                {{ form.full_name }}
+                {% if form.full_name.errors %}
+                  <div class="text-danger mt-1" style="font-size:.8rem;">
+                    <i class="bi bi-exclamation-circle me-1"></i>{{ form.full_name.errors.0 }}
+                  </div>
+                {% endif %}
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-medium">Phone</label>
+                {{ form.phone }}
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-medium">Gender</label>
+                {{ form.gender }}
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-medium">Department</label>
+                {{ form.department }}
+              </div>
+
+              <!-- Profile picture (also settable via avatar btn above) -->
+              <div class="col-12">
+                <label class="form-label fw-medium">
+                  <i class="bi bi-image me-1 text-muted"></i>Profile Picture
+                </label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-upload"></i></span>
+                  <input type="file" name="profile_pic" id="profilePicInput"
+                         accept="image/*" class="form-control"
+                         onchange="previewAvatar(this)">
+                </div>
+                {% if user.profile_pic %}
+                  <div class="mt-2 d-flex align-items-center gap-2" style="font-size:.8rem;">
+                    <i class="bi bi-check-circle text-success"></i>
+                    Current: <em>{{ user.profile_pic.name }}</em>
+                  </div>
+                {% endif %}
+              </div>
+            </div><!-- /row -->
+
+            <div class="mt-4 d-flex flex-wrap gap-2 align-items-center">
+              <button type="submit" class="btn btn-primary px-4">
+                <i class="bi bi-floppy me-1"></i>Save Changes
+              </button>
+              <button type="reset" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-counterclockwise me-1"></i>Reset
+              </button>
+              <a href="{% url 'dashboard:home' %}" class="btn btn-link text-muted ms-auto">
+                Back to Dashboard
+              </a>
+            </div>
+          </form>
+        </div><!-- /tabEdit -->
+
+        <!-- ══ TAB 2: Security ════════════════════════════ -->
+        <div class="tab-pane fade" id="tabSecurity">
+          <h6 class="fw-semibold mb-1">Change Password</h6>
+          <p class="text-muted mb-4" style="font-size:.85rem;">
+            Keep your account safe by using a strong, unique password.
+          </p>
+
+          <form method="post" id="passwordForm">
+            {% csrf_token %}
+            <input type="hidden" name="form_type" value="password">
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label fw-medium">Current Password</label>
+                <div class="input-group">
+                  <input type="password" name="old_password" id="id_old_password"
+                         class="form-control" placeholder="Current password" autocomplete="current-password">
+                  <button type="button" class="btn btn-outline-secondary toggle-pw" data-target="id_old_password">
+                    <i class="bi bi-eye"></i>
+                  </button>
+                </div>
+                <div class="text-danger mt-1 field-error" id="err_old_password" style="font-size:.8rem;display:none;"></div>
+              </div>
+
+              <div class="col-md-6"><!-- spacer --></div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-medium">New Password</label>
+                <div class="input-group">
+                  <input type="password" name="new_password1" id="id_new_password1"
+                         class="form-control" placeholder="New password" autocomplete="new-password"
+                         oninput="checkStrength(this.value)">
+                  <button type="button" class="btn btn-outline-secondary toggle-pw" data-target="id_new_password1">
+                    <i class="bi bi-eye"></i>
+                  </button>
+                </div>
+                <!-- Strength bar -->
+                <div class="mt-1 mb-1">
+                  <div class="d-flex justify-content-between mb-1" style="font-size:.75rem;">
+                    <span class="text-muted">Password strength</span>
+                    <span id="strengthLabel" class="fw-medium"></span>
+                  </div>
+                  <div class="bg-light rounded" style="height:5px;">
+                    <div id="strengthBar" class="strength-bar bg-danger" style="width:0%"></div>
+                  </div>
+                </div>
+                <div class="text-danger mt-1 field-error" id="err_new_password1" style="font-size:.8rem;display:none;"></div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-medium">Confirm New Password</label>
+                <div class="input-group">
+                  <input type="password" name="new_password2" id="id_new_password2"
+                         class="form-control" placeholder="Confirm new password" autocomplete="new-password">
+                  <button type="button" class="btn btn-outline-secondary toggle-pw" data-target="id_new_password2">
+                    <i class="bi bi-eye"></i>
+                  </button>
+                </div>
+                <div class="text-danger mt-1 field-error" id="err_new_password2" style="font-size:.8rem;display:none;"></div>
+              </div>
+            </div><!-- /row -->
+
+            <div class="alert alert-info d-flex align-items-start gap-2 mt-3" style="font-size:.82rem;">
+              <i class="bi bi-info-circle-fill mt-1 flex-shrink-0"></i>
+              <div>
+                Password must be at least <strong>8 characters</strong>,
+                cannot be entirely numeric, and should not be similar to your username or email.
+              </div>
+            </div>
+
+            <div class="mt-3 d-flex gap-2">
+              <button type="submit" class="btn btn-primary px-4">
+                <i class="bi bi-check-lg me-1"></i>Update Password
+              </button>
+              <button type="reset" class="btn btn-outline-secondary">
+                <i class="bi bi-x-lg me-1"></i>Clear
+              </button>
+            </div>
+          </form>
+        </div><!-- /tabSecurity -->
+
+        <!-- ══ TAB 3: Danger Zone ═════════════════════════ -->
+        <div class="tab-pane fade" id="tabDanger">
+          <h6 class="fw-semibold text-danger mb-4">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>Account Actions
+          </h6>
+
+          <!-- Resign / Self-deactivate -->
+          <div class="danger-zone mb-4">
+            <div class="dz-title"><i class="bi bi-box-arrow-right me-2"></i>Resign from System</div>
+            <p class="text-muted mb-3" style="font-size:.875rem;">
+              Resigning will immediately deactivate your account and log you out.
+              You will not be able to log back in. An administrator must re-activate
+              your account if you change your mind.
+            </p>
+            <a href="{% url 'accounts:resign' %}" class="btn btn-outline-danger">
+              <i class="bi bi-box-arrow-right me-1"></i>Go to Resign Page
+            </a>
+          </div>
+
+          <!-- Delete account note (admin-only) -->
+          <div class="danger-zone">
+            <div class="dz-title"><i class="bi bi-trash3 me-2"></i>Permanent Account Removal</div>
+            <p class="text-muted mb-0" style="font-size:.875rem;">
+              Permanent deletion of user accounts can only be performed by a
+              <strong>Super Admin</strong> from the User Management section.
+              Self-deletion is disabled to preserve audit trail integrity.
+            </p>
+          </div>
+        </div><!-- /tabDanger -->
+
+      </div><!-- /tab-content -->
+    </div><!-- /card -->
+  </div><!-- /col -->
+</div><!-- /row -->
+
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ── Avatar preview ──────────────────────────────────────────
+function previewAvatar(input) {
+  if (!input.files || !input.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const preview = document.getElementById('avatarPreview');
+    const initials = document.getElementById('avatarInitials');
+    if (preview) {
+      preview.src = e.target.result;
+    } else if (initials) {
+      // Swap initials div for an img
+      const img = document.createElement('img');
+      img.id = 'avatarPreview';
+      img.src = e.target.result;
+      img.alt = 'Preview';
+      img.className = initials.className;
+      initials.replaceWith(img);
+    }
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
+// Wire camera button → hidden file input
+const avatarCameraBtn = document.getElementById('avatarFileInput');
+const profilePicInput = document.getElementById('profilePicInput');
+if (avatarCameraBtn) {
+  avatarCameraBtn.addEventListener('change', function() {
+    // Sync selection to visible input for form submission
+    previewAvatar(this);
+  });
+}
+
+// ── Toggle password visibility ──────────────────────────────
+document.querySelectorAll('.toggle-pw').forEach(btn => {
+  btn.addEventListener('click', function() {
+    const target = document.getElementById(this.dataset.target);
+    if (!target) return;
+    const isText = target.type === 'text';
+    target.type = isText ? 'password' : 'text';
+    this.querySelector('i').className = isText ? 'bi bi-eye' : 'bi bi-eye-slash';
+  });
+});
+
+// ── Password strength checker ───────────────────────────────
+function checkStrength(pw) {
+  const bar   = document.getElementById('strengthBar');
+  const label = document.getElementById('strengthLabel');
+  if (!bar || !label) return;
+  let score = 0;
+  if (pw.length >= 8)  score++;
+  if (/[A-Z]/.test(pw)) score++;
+  if (/[0-9]/.test(pw)) score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
+  const levels = [
+    { pct: '0%',   cls: 'bg-danger',  text: '' },
+    { pct: '25%',  cls: 'bg-danger',  text: 'Weak' },
+    { pct: '50%',  cls: 'bg-warning', text: 'Fair' },
+    { pct: '75%',  cls: 'bg-info',    text: 'Good' },
+    { pct: '100%', cls: 'bg-success', text: 'Strong' },
+  ];
+  const lvl = levels[score];
+  bar.style.width = lvl.pct;
+  bar.className   = 'strength-bar ' + lvl.cls;
+  label.textContent = lvl.text;
+  label.className = 'fw-medium ' + lvl.cls.replace('bg-', 'text-');
+}
+
+// ── Restore active tab after page reload (e.g. on form error) ──
+const urlHash = window.location.hash;
+if (urlHash) {
+  const triggerEl = document.querySelector(`[data-bs-target="${urlHash}"]`);
+  if (triggerEl) bootstrap.Tab.getOrCreateInstance(triggerEl).show();
+}
+</script>
+{% endblock %}

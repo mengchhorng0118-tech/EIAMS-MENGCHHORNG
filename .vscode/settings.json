@@ -1,0 +1,25 @@
+{
+    "workbench.browser.openLocalhostLinks": false,
+
+    // ── Silence false CSS/JS diagnostics in Django HTML templates ──────────
+    // VS Code's CSS and JS validators don't understand Django template tags
+    // ({% %} and {{ }}) and report them as syntax errors.
+    // These are 100% false positives — the code is valid at runtime.
+    "css.validate": false,
+    "less.validate": false,
+    "scss.validate": false,
+    "javascript.validate.enable": false,
+
+    // Associate .html files with Django HTML for proper syntax highlighting
+    "files.associations": {
+        "**/*.html": "django-html"
+    },
+
+    // Tell the CSS linter not to flag unknown rules inside style attributes
+    "css.lint.unknownAtRules": "ignore",
+
+    // Emmet works correctly in Django HTML
+    "emmet.includeLanguages": {
+        "django-html": "html"
+    }
+}

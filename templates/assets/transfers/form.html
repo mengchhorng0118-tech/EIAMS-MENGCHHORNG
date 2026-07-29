@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.form-section { background:#fff; border:1px solid #e8eef5; border-radius:12px; padding:20px; margin-bottom:16px; }
+.form-section-title { font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:#64748b; margin-bottom:14px; border-bottom:1px solid #f1f5f9; padding-bottom:8px; }
+.asset-info-box { background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px 14px; font-size:.8rem; }
+.asset-info-box .ai-label { font-size:.65rem; color:#94a3b8; text-transform:uppercase; letter-spacing:.04em; }
+.asset-info-box .ai-val   { font-weight:600; color:#0f172a; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1><i class="bi bi-arrow-repeat me-2 text-primary"></i>{{ page_title }}</h1>
+    <nav aria-label="breadcrumb"><ol class="breadcrumb mb-0">
+      <li class="breadcrumb-item"><a href="{% url 'dashboard:home' %}">Dashboard</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'assets:transfer_list' %}">Transfers</a></li>
+      <li class="breadcrumb-item active">{{ action }}</li>
+    </ol></nav>
+  </div>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-lg-9">
+    <form method="post" enctype="multipart/form-data" id="transferForm" novalidate>
+      {% csrf_token %}
+
+      <!-- Asset selection -->
+      <div class="form-section">
+        <div class="form-section-title"><i class="bi bi-pc-display me-1"></i>Asset</div>
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label fw-semibold">Asset <span class="text-danger">*</span></label>
+            {{ form.asset }}
+            {% if form.asset.errors %}<div class="text-danger mt-1" style="font-size:.78rem;">{{ form.asset.errors.0 }}</div>{% endif %}
+          </div>
+          <!-- Live asset info box -->
+          <div class="col-12" id="assetInfoWrap" style="display:none;">
+            <div class="asset-info-box d-flex gap-4 flex-wrap">
+              <div>
+                <div class="ai-label">Code</div>
+                <div class="ai-val" id="aiCode">—</div>
+              </div>
+              <div>
+                <div class="ai-label">Current Location</div>
+                <div class="ai-val" id="aiLocation">—</div>
+              </div>
+              <div>
+                <div class="ai-label">Status</div>
+                <div class="ai-val" id="aiStatus">—</div>
+              </div>
+              <div id="aiWarning" class="text-danger fw-bold" style="display:none;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Locations -->
+      <div class="form-section">
+        <div class="form-section-title"><i class="bi bi-geo-alt me-1"></i>Locations</div>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">From Location <span class="text-danger">*</span></label>
+            {{ form.from_location }}
+            {% if form.from_location.errors %}<div class="text-danger mt-1" style="font-size:.78rem;">{{ form.from_location.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">To Location <span class="text-danger">*</span></label>
+            {{ form.to_location }}
+            {% if form.to_location.errors %}<div class="text-danger mt-1" style="font-size:.78rem;">{{ form.to_location.errors.0 }}</div>{% endif %}
+            <div id="sameLocationError" class="text-danger mt-1" style="font-size:.78rem;display:none;">
+              <i class="bi bi-exclamation-circle me-1"></i>From and To locations must differ.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Details -->
+      <div class="form-section">
+        <div class="form-section-title"><i class="bi bi-info-circle me-1"></i>Transfer Details</div>
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">Transfer Date <span class="text-danger">*</span></label>
+            {{ form.transfer_date }}
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-semibold">Reason for Transfer <span class="text-danger">*</span></label>
+            {{ form.reason }}
+            {% if form.reason.errors %}<div class="text-danger mt-1" style="font-size:.78rem;">{{ form.reason.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-semibold">Additional Notes</label>
+            {{ form.notes }}
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-semibold">Supporting Document</label>
+            {{ form.attachment }}
+            <div class="form-text">PDF, image, or Word document. Max 5 MB.</div>
+          </div>
+        </div>
+      </div>
+
+      {% if form.non_field_errors %}
+      <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+      {% endif %}
+
+      <div class="d-flex gap-2 mt-2">
+        <button type="submit" class="btn btn-primary px-4" id="submitBtn">
+          <i class="bi bi-check-lg me-1"></i>{{ action }}
+        </button>
+        <a href="{% url 'assets:transfer_list' %}" class="btn btn-outline-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function(){
+  'use strict';
+
+  const assetSelect   = document.getElementById('id_asset');
+  const fromSelect    = document.getElementById('id_from_location');
+  const toSelect      = document.getElementById('id_to_location');
+  const infoWrap      = document.getElementById('assetInfoWrap');
+  const sameLocErr    = document.getElementById('sameLocationError');
+  const submitBtn     = document.getElementById('submitBtn');
+
+  // ── Fetch asset info on select ──────────────────────────
+  if (assetSelect) {
+    assetSelect.addEventListener('change', function() {
+      const id = this.value;
+      if (!id) { infoWrap.style.display = 'none'; return; }
+
+      fetch(`{% url 'assets:ajax_asset_info' %}?asset_id=${id}`, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.error) { infoWrap.style.display = 'none'; return; }
+        document.getElementById('aiCode').textContent     = data.asset_code;
+        document.getElementById('aiLocation').textContent = data.location_name || '—';
+        document.getElementById('aiStatus').textContent   = data.asset_status;
+        const warn = document.getElementById('aiWarning');
+        if (!data.can_transfer) {
+          warn.textContent = '⚠ ' + data.reason;
+          warn.style.display = 'block';
+          submitBtn.disabled = true;
+        } else {
+          warn.style.display = 'none';
+          submitBtn.disabled = false;
+        }
+        // Auto-fill from_location if empty
+        if (fromSelect && data.location_id && !fromSelect.value) {
+          fromSelect.value = data.location_id;
+        }
+        infoWrap.style.display = 'block';
+      })
+      .catch(() => { infoWrap.style.display = 'none'; });
+    });
+  }
+
+  // ── Same-location client-side check ─────────────────────
+  function checkLocations() {
+    if (fromSelect && toSelect && fromSelect.value && toSelect.value
+        && fromSelect.value === toSelect.value) {
+      sameLocErr.style.display = 'block';
+      submitBtn.disabled = true;
+    } else {
+      sameLocErr.style.display = 'none';
+      if (!document.getElementById('aiWarning') ||
+          document.getElementById('aiWarning').style.display === 'none') {
+        submitBtn.disabled = false;
+      }
+    }
+  }
+  if (fromSelect) fromSelect.addEventListener('change', checkLocations);
+  if (toSelect)   toSelect.addEventListener('change', checkLocations);
+})();
+</script>
+{% endblock %}

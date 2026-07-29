@@ -1,0 +1,46 @@
+# Django Inventory & Asset Management System - Requirements
+# Python 3.10+ required
+
+# Core Framework
+Django==4.2.7
+django-crispy-forms==2.1
+crispy-bootstrap5==0.7
+
+# Database
+mysqlclient==2.2.0  # For MySQL (optional)
+
+# Forms & Validation
+django-widget-tweaks==1.5.0
+
+# PDF Generation
+reportlab==4.0.7
+PyPDF2==3.0.1
+
+# Excel Generation
+openpyxl==3.1.2
+xlsxwriter==3.1.9
+
+# Image Processing
+Pillow==10.1.0
+
+# Barcode Generation
+python-barcode==0.15.1
+qrcode==7.4.2
+
+# Date/Time
+python-dateutil==2.8.2
+
+# Environment Variables
+python-decouple==3.8
+
+# Security
+django-cors-headers==4.3.1
+
+# Pagination
+django-bootstrap-pagination==1.7.2
+
+# Charts & Visualization
+django-chartjs==2.3.0
+
+# Development Tools
+django-debug-toolbar==4.2.0  # Development only

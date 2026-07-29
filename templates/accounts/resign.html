@@ -1,0 +1,344 @@
+{% extends "base.html" %}
+{% block title %}Resign from EIAMS{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ══ Resign Page ════════════════════════════════════════════ */
+.resign-wrapper {
+  min-height: calc(100vh - 130px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+
+/* hero icon ring */
+.resign-icon-ring {
+  width: 88px; height: 88px;
+  border-radius: 50%;
+  background: #fef2f2;
+  border: 3px solid #fecaca;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 1.5rem;
+  animation: pulse-ring 2.4s infinite;
+}
+.resign-icon-ring i { font-size: 2.4rem; color: #dc2626; }
+
+@keyframes pulse-ring {
+  0%   { box-shadow: 0 0 0 0   rgba(220,38,38,.35); }
+  60%  { box-shadow: 0 0 0 14px rgba(220,38,38,0);  }
+  100% { box-shadow: 0 0 0 0   rgba(220,38,38,0);   }
+}
+
+/* main card */
+.resign-card {
+  background: #fff;
+  border-radius: 1.25rem;
+  border: 1.5px solid #fecaca;
+  box-shadow: 0 8px 40px rgba(220,38,38,.08), 0 2px 8px rgba(0,0,0,.06);
+  padding: 2.5rem 2rem;
+  width: 100%;
+  max-width: 520px;
+}
+
+/* consequences list */
+.consequence-list {
+  list-style: none;
+  padding: 0; margin: 0;
+}
+.consequence-list li {
+  display: flex; align-items: flex-start; gap: .75rem;
+  padding: .6rem 0;
+  border-bottom: 1px solid #fef2f2;
+  font-size: .875rem;
+  color: #374151;
+}
+.consequence-list li:last-child { border-bottom: none; }
+.consequence-list .cq-icon {
+  width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .8rem; flex-shrink: 0; margin-top: .05rem;
+}
+
+/* confirm input */
+.confirm-field .form-control {
+  border-radius: .625rem;
+  border: 1.5px solid #e2e8f0;
+  font-size: .95rem;
+  padding: .65rem 1rem;
+  letter-spacing: .05em;
+  text-align: center;
+  font-weight: 700;
+  transition: border-color .2s;
+}
+.confirm-field .form-control:focus {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220,38,38,.12);
+  outline: none;
+}
+.confirm-field .form-control.is-valid  { border-color: #16a34a; }
+.confirm-field .form-control.is-invalid { border-color: #dc2626; }
+
+/* submit button */
+.btn-resign {
+  background: #dc2626;
+  color: #fff;
+  border: none;
+  border-radius: .75rem;
+  padding: .75rem 2rem;
+  font-size: 1rem;
+  font-weight: 700;
+  width: 100%;
+  cursor: not-allowed;
+  opacity: .45;
+  transition: all .22s;
+  display: flex; align-items: center; justify-content: center; gap: .5rem;
+}
+.btn-resign.enabled {
+  cursor: pointer;
+  opacity: 1;
+  box-shadow: 0 4px 14px rgba(220,38,38,.4);
+}
+.btn-resign.enabled:hover {
+  background: #b91c1c;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(220,38,38,.45);
+}
+
+/* progress stepper */
+.resign-step {
+  display: flex; align-items: center; gap: .5rem;
+  font-size: .75rem; color: #94a3b8; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .05em;
+}
+.resign-step .step-dot {
+  width: 22px; height: 22px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .65rem; font-weight: 800;
+}
+.resign-step .step-dot.done  { background: #fef2f2; color: #dc2626; border: 1.5px solid #fecaca; }
+.resign-step .step-dot.active { background: #dc2626; color: #fff; }
+.resign-step .step-line { flex: 1; height: 2px; background: #fecaca; border-radius: 99px; }
+
+/* user info strip */
+.user-strip {
+  display: flex; align-items: center; gap: .75rem;
+  background: #f8fafc; border: 1px solid #e2e8f0;
+  border-radius: .75rem; padding: .75rem 1rem;
+  margin-bottom: 1.25rem;
+}
+.user-strip-avatar {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: #2563eb; color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 1rem; overflow: hidden; flex-shrink: 0;
+}
+.user-strip-avatar img { width: 100%; height: 100%; object-fit: cover; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="resign-wrapper">
+  <div style="width:100%;max-width:520px;">
+
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+      <ol class="breadcrumb" style="font-size:.78rem;">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard:home' %}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'accounts:profile' %}">My Profile</a></li>
+        <li class="breadcrumb-item active text-danger">Resign</li>
+      </ol>
+    </nav>
+
+    <div class="resign-card">
+
+      <!-- Step indicator -->
+      <div class="resign-step mb-4">
+        <div class="step-dot done">1</div>
+        <span style="color:#dc2626;">Read consequences</span>
+        <div class="step-line"></div>
+        <div class="step-dot active">2</div>
+        <span style="color:#dc2626;">Confirm &amp; submit</span>
+      </div>
+
+      <!-- Icon -->
+      <div class="resign-icon-ring">
+        <i class="bi bi-box-arrow-right"></i>
+      </div>
+
+      <!-- Title -->
+      <h1 class="text-center fw-800 mb-1" style="font-size:1.4rem;font-weight:800;color:#0f172a;">
+        Resign from EIAMS
+      </h1>
+      <p class="text-center text-muted mb-4" style="font-size:.875rem;">
+        You are about to permanently deactivate your account.
+        This action requires your explicit confirmation.
+      </p>
+
+      <!-- Who is resigning -->
+      <div class="user-strip">
+        <div class="user-strip-avatar">
+          {% if user.profile_pic %}
+            <img src="{{ user.profile_pic.url }}" alt="{{ user.full_name }}">
+          {% else %}
+            {{ user.full_name|first|upper }}
+          {% endif %}
+        </div>
+        <div>
+          <div class="fw-bold" style="font-size:.9rem;color:#0f172a;">{{ user.full_name }}</div>
+          <div class="text-muted" style="font-size:.75rem;">
+            {{ user.email }}
+            <span class="ms-2 badge" style="background:#eff6ff;color:#2563eb;border-radius:99px;padding:.2em .6em;font-size:.68rem;">
+              {{ user.get_role_name }}
+            </span>
+          </div>
+        </div>
+        <span class="ms-auto badge"
+              style="background:#fef2f2;color:#dc2626;border:1px solid #fecaca;border-radius:99px;padding:.3em .8em;font-size:.7rem;font-weight:700;">
+          Resigning
+        </span>
+      </div>
+
+      <!-- Consequences -->
+      <div class="mb-4" style="background:#fffbfb;border:1px solid #fecaca;border-radius:.875rem;padding:1rem 1.1rem;">
+        <div class="fw-bold mb-2" style="font-size:.8rem;color:#dc2626;text-transform:uppercase;letter-spacing:.05em;">
+          <i class="bi bi-exclamation-triangle-fill me-1"></i>What will happen
+        </div>
+        <ul class="consequence-list">
+          <li>
+            <div class="cq-icon" style="background:#fef2f2;color:#dc2626;">
+              <i class="bi bi-person-x-fill"></i>
+            </div>
+            <div>
+              <strong>Account deactivated immediately</strong>
+              <div class="text-muted" style="font-size:.78rem;margin-top:.1rem;">
+                Your status will be set to <em>Inactive</em> and you will be logged out.
+              </div>
+            </div>
+          </li>
+          <li>
+            <div class="cq-icon" style="background:#fff7ed;color:#ea580c;">
+              <i class="bi bi-door-closed-fill"></i>
+            </div>
+            <div>
+              <strong>Login access revoked</strong>
+              <div class="text-muted" style="font-size:.78rem;margin-top:.1rem;">
+                You will not be able to sign back in unless an administrator re-activates your account.
+              </div>
+            </div>
+          </li>
+          <li>
+            <div class="cq-icon" style="background:#f0fdf4;color:#16a34a;">
+              <i class="bi bi-archive-fill"></i>
+            </div>
+            <div>
+              <strong>Data preserved</strong>
+              <div class="text-muted" style="font-size:.78rem;margin-top:.1rem;">
+                All your records, transactions and audit logs are retained. Nothing is deleted.
+              </div>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Confirmation form -->
+      <form method="post" action="{% url 'accounts:resign' %}" id="resignPageForm">
+        {% csrf_token %}
+
+        <div class="confirm-field mb-3">
+          <label class="form-label fw-bold" style="font-size:.82rem;color:#374151;">
+            Type <span class="text-danger fw-800">RESIGN</span> below to confirm
+          </label>
+          <input
+            type="text"
+            id="resignInput"
+            class="form-control"
+            placeholder="RESIGN"
+            autocomplete="off"
+            spellcheck="false"
+            oninput="onResignInput(this)"
+          >
+          <div id="resignInputFeedback" class="mt-1" style="font-size:.77rem;min-height:1.2rem;"></div>
+        </div>
+
+        <!-- Submit + Cancel -->
+        <button type="button" class="btn-resign mb-3" id="resignSubmitBtn"
+                onclick="submitResign()" disabled>
+          <i class="bi bi-box-arrow-right"></i>
+          Confirm Resignation
+        </button>
+
+        <a href="{% url 'accounts:profile' %}" class="btn btn-outline-secondary w-100"
+           style="border-radius:.75rem;font-weight:700;">
+          <i class="bi bi-arrow-left me-1"></i>Cancel — Go Back to Profile
+        </a>
+      </form>
+
+      <!-- Footer note -->
+      <div class="text-center mt-4" style="font-size:.72rem;color:#94a3b8;line-height:1.6;">
+        <i class="bi bi-info-circle me-1"></i>
+        To re-activate your account, contact your system administrator.<br>
+        This action <strong>cannot be reversed by yourself</strong>.
+      </div>
+
+    </div><!-- /resign-card -->
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function onResignInput(input) {
+  const val     = (input.value || '').trim();
+  const btn     = document.getElementById('resignSubmitBtn');
+  const feedback = document.getElementById('resignInputFeedback');
+  const correct = val === 'RESIGN';
+
+  if (val === '') {
+    input.classList.remove('is-valid', 'is-invalid');
+    btn.classList.remove('enabled');
+    btn.disabled = true;
+    feedback.textContent = '';
+    return;
+  }
+
+  if (correct) {
+    input.classList.add('is-valid');
+    input.classList.remove('is-invalid');
+    btn.classList.add('enabled');
+    btn.disabled = false;
+    feedback.innerHTML = '<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>Confirmed. You may now submit.</span>';
+  } else {
+    input.classList.add('is-invalid');
+    input.classList.remove('is-valid');
+    btn.classList.remove('enabled');
+    btn.disabled = true;
+    // Show partial progress hint
+    const expected = 'RESIGN';
+    const matched  = expected.startsWith(val.toUpperCase()) ? val.length : 0;
+    if (matched > 0 && matched < expected.length) {
+      feedback.innerHTML = `<span class="text-warning"><i class="bi bi-pencil me-1"></i>Keep typing… ${matched}/${expected.length} characters matched</span>`;
+    } else {
+      feedback.innerHTML = '<span class="text-danger"><i class="bi bi-x-circle me-1"></i>Type exactly: RESIGN</span>';
+    }
+  }
+}
+
+function submitResign() {
+  const val = (document.getElementById('resignInput').value || '').trim();
+  if (val !== 'RESIGN') return;
+
+  const btn = document.getElementById('resignSubmitBtn');
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Processing…';
+  btn.disabled = true;
+  btn.classList.remove('enabled');
+
+  document.getElementById('resignPageForm').submit();
+}
+
+// Prevent accidental Enter submission
+document.getElementById('resignInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') e.preventDefault();
+});
+</script>
+{% endblock %}
