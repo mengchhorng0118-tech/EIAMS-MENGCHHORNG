@@ -1,89 +1,242 @@
 {% extends "base.html" %}
 {% block title %}{{ page_title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Highlight invalid fields the same way Bootstrap's native validation does */
+.field-error { font-size: .8rem; }
+</style>
+{% endblock %}
+
 {% block content %}
 
+{# ── Page Header ──────────────────────────────────────────── #}
 <div class="page-header">
   <div>
     <h1><i class="bi bi-pc-display me-2 text-primary"></i>{{ page_title }}</h1>
-    <nav aria-label="breadcrumb"><ol class="breadcrumb">
-      <li class="breadcrumb-item"><a href="{% url 'assets:asset_list' %}">Assets</a></li>
-      <li class="breadcrumb-item active">{{ action }}</li>
-    </ol></nav>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item"><a href="{% url 'assets:asset_list' %}">Assets</a></li>
+        <li class="breadcrumb-item active">{{ action }}</li>
+      </ol>
+    </nav>
   </div>
 </div>
 
 <div class="row justify-content-center">
   <div class="col-lg-9">
-    <div class="card">
-      <div class="card-header"><h6 class="mb-0">{{ page_title }}</h6></div>
+    <div class="card shadow-sm">
+      <div class="card-header">
+        <h6 class="mb-0 fw-semibold">{{ page_title }}</h6>
+      </div>
       <div class="card-body">
-        <form method="post">
+
+        {# ── Non-field / form-level errors ────────────────────── #}
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger" role="alert">
+            {% for error in form.non_field_errors %}
+              <div><i class="bi bi-exclamation-triangle-fill me-2"></i>{{ error }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data" novalidate>
           {% csrf_token %}
+
           <div class="row g-3">
+
+            {# ── Identification ───────────────────────────────── #}
+            <div class="col-12">
+              <h6 class="text-muted text-uppercase fw-semibold mb-2" style="font-size:.75rem;letter-spacing:.06em;">
+                <i class="bi bi-tag me-1"></i>Identification
+              </h6>
+            </div>
+
             <div class="col-md-6">
-              <label class="form-label">Asset Code</label>
+              <label for="{{ form.asset_code.id_for_label }}" class="form-label">Asset Code</label>
               {{ form.asset_code }}
               <div class="form-text">Leave blank to auto-generate.</div>
-              {% if form.asset_code.errors %}<div class="text-danger mt-1" style="font-size:.8rem;">{{ form.asset_code.errors.0 }}</div>{% endif %}
+              {% if form.asset_code.errors %}
+                <div class="text-danger field-error mt-1">
+                  <i class="bi bi-exclamation-circle me-1"></i>{{ form.asset_code.errors.0 }}
+                </div>
+              {% endif %}
             </div>
+
             <div class="col-md-6">
-              <label class="form-label">Asset Name <span class="text-danger">*</span></label>
+              <label for="{{ form.asset_name.id_for_label }}" class="form-label">
+                Asset Name <span class="text-danger">*</span>
+              </label>
               {{ form.asset_name }}
-              {% if form.asset_name.errors %}<div class="text-danger mt-1" style="font-size:.8rem;">{{ form.asset_name.errors.0 }}</div>{% endif %}
+              {% if form.asset_name.errors %}
+                <div class="text-danger field-error mt-1">
+                  <i class="bi bi-exclamation-circle me-1"></i>{{ form.asset_name.errors.0 }}
+                </div>
+              {% endif %}
             </div>
+
             <div class="col-md-6">
-              <label class="form-label">Serial Number</label>
+              <label for="{{ form.serial_number.id_for_label }}" class="form-label">Serial Number</label>
               {{ form.serial_number }}
+              {% if form.serial_number.errors %}
+                <div class="text-danger field-error mt-1">
+                  <i class="bi bi-exclamation-circle me-1"></i>{{ form.serial_number.errors.0 }}
+                </div>
+              {% endif %}
             </div>
+
             <div class="col-md-6">
-              <label class="form-label">Barcode</label>
+              <label for="{{ form.barcode.id_for_label }}" class="form-label">Barcode</label>
               {{ form.barcode }}
+              {% if form.barcode.errors %}
+                <div class="text-danger field-error mt-1">
+                  <i class="bi bi-exclamation-circle me-1"></i>{{ form.barcode.errors.0 }}
+                </div>
+              {% endif %}
             </div>
+
+            {# ── Classification ───────────────────────────────── #}
+            <div class="col-12 mt-2">
+              <h6 class="text-muted text-uppercase fw-semibold mb-2" style="font-size:.75rem;letter-spacing:.06em;">
+                <i class="bi bi-diagram-3 me-1"></i>Classification
+              </h6>
+            </div>
+
             <div class="col-md-6">
-              <label class="form-label">Category <span class="text-danger">*</span></label>
+              <label for="{{ form.category.id_for_label }}" class="form-label">
+                Category <span class="text-danger">*</span>
+              </label>
               {{ form.category }}
-              {% if form.category.errors %}<div class="text-danger mt-1" style="font-size:.8rem;">{{ form.category.errors.0 }}</div>{% endif %}
+              {% if form.category.errors %}
+                <div class="text-danger field-error mt-1">
+                  <i class="bi bi-exclamation-circle me-1"></i>{{ form.category.errors.0 }}
+                </div>
+              {% endif %}
             </div>
+
             <div class="col-md-6">
-              <label class="form-label">Supplier</label>
+              <label for="{{ form.supplier.id_for_label }}" class="form-label">Supplier</label>
               {{ form.supplier }}
+              {% if form.supplier.errors %}
+                <div class="text-danger field-error mt-1">
+                  <i class="bi bi-exclamation-circle me-1"></i>{{ form.supplier.errors.0 }}
+                </div>
+              {% endif %}
             </div>
+
+            {# ── Location & Assignment ─────────────────────────── #}
+            <div class="col-12 mt-2">
+              <h6 class="text-muted text-uppercase fw-semibold mb-2" style="font-size:.75rem;letter-spacing:.06em;">
+                <i class="bi bi-geo-alt me-1"></i>Location &amp; Assignment
+              </h6>
+            </div>
+
             <div class="col-md-6">
-              <label class="form-label">Location</label>
+              <label for="{{ form.location.id_for_label }}" class="form-label">Current Location</label>
               {{ form.location }}
+              {% if form.location.errors %}
+                <div class="text-danger field-error mt-1">
+                  <i class="bi bi-exclamation-circle me-1"></i>{{ form.location.errors.0 }}
+                </div>
+              {% endif %}
             </div>
+
             <div class="col-md-6">
-              <label class="form-label">Assigned To</label>
+              <label for="{{ form.assigned_to.id_for_label }}" class="form-label">Assigned To</label>
               {{ form.assigned_to }}
+              {% if form.assigned_to.errors %}
+                <div class="text-danger field-error mt-1">
+                  <i class="bi bi-exclamation-circle me-1"></i>{{ form.assigned_to.errors.0 }}
+                </div>
+              {% endif %}
             </div>
+
+            {# ── Financial ────────────────────────────────────── #}
+            <div class="col-12 mt-2">
+              <h6 class="text-muted text-uppercase fw-semibold mb-2" style="font-size:.75rem;letter-spacing:.06em;">
+                <i class="bi bi-currency-dollar me-1"></i>Financial
+              </h6>
+            </div>
+
             <div class="col-md-6">
-              <label class="form-label">Purchase Date</label>
+              <label for="{{ form.purchase_date.id_for_label }}" class="form-label">Purchase Date</label>
               {{ form.purchase_date }}
+              {% if form.purchase_date.errors %}
+                <div class="text-danger field-error mt-1">
+                  <i class="bi bi-exclamation-circle me-1"></i>{{ form.purchase_date.errors.0 }}
+                </div>
+              {% endif %}
             </div>
+
             <div class="col-md-6">
-              <label class="form-label">Purchase Price</label>
+              <label for="{{ form.purchase_price.id_for_label }}" class="form-label">
+                Purchase Price (USD)
+              </label>
               {{ form.purchase_price }}
+              {% if form.purchase_price.errors %}
+                <div class="text-danger field-error mt-1">
+                  <i class="bi bi-exclamation-circle me-1"></i>{{ form.purchase_price.errors.0 }}
+                </div>
+              {% endif %}
             </div>
+
             <div class="col-md-6">
-              <label class="form-label">Warranty Expiry</label>
+              <label for="{{ form.warranty_expiry_date.id_for_label }}" class="form-label">
+                Warranty Expiry
+              </label>
               {{ form.warranty_expiry_date }}
+              {% if form.warranty_expiry_date.errors %}
+                <div class="text-danger field-error mt-1">
+                  <i class="bi bi-exclamation-circle me-1"></i>{{ form.warranty_expiry_date.errors.0 }}
+                </div>
+              {% endif %}
             </div>
+
+            {# ── Status ───────────────────────────────────────── #}
             <div class="col-md-6">
-              <label class="form-label">Asset Status</label>
+              <label for="{{ form.asset_status.id_for_label }}" class="form-label">
+                Asset Status <span class="text-danger">*</span>
+              </label>
               {{ form.asset_status }}
+              {% if form.asset_status.errors %}
+                <div class="text-danger field-error mt-1">
+                  <i class="bi bi-exclamation-circle me-1"></i>{{ form.asset_status.errors.0 }}
+                </div>
+              {% endif %}
             </div>
+
+            {# ── Description ──────────────────────────────────── #}
             <div class="col-12">
-              <label class="form-label">Description</label>
+              <label for="{{ form.description.id_for_label }}" class="form-label">Description</label>
               {{ form.description }}
+              {% if form.description.errors %}
+                <div class="text-danger field-error mt-1">
+                  <i class="bi bi-exclamation-circle me-1"></i>{{ form.description.errors.0 }}
+                </div>
+              {% endif %}
             </div>
+
+          </div>{# /row #}
+
+          {# ── Actions ──────────────────────────────────────────── #}
+          <div class="mt-4 d-flex flex-wrap gap-2 align-items-center">
+            <button type="submit" class="btn btn-primary px-4">
+              <i class="bi bi-check-lg me-1"></i>{{ action }} Asset
+            </button>
+            <a href="{% url 'assets:asset_list' %}" class="btn btn-outline-secondary">
+              <i class="bi bi-x-lg me-1"></i>Cancel
+            </a>
+            {% if obj %}
+              <a href="{% url 'assets:asset_detail' obj.pk %}" class="btn btn-link text-muted ms-auto">
+                <i class="bi bi-arrow-left me-1"></i>Back to Asset
+              </a>
+            {% endif %}
           </div>
-          <div class="mt-4 d-flex gap-2">
-            <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>{{ action }} Asset</button>
-            <a href="{% url 'assets:asset_list' %}" class="btn btn-outline-secondary">Cancel</a>
-          </div>
+
         </form>
-      </div>
-    </div>
+      </div>{# /card-body #}
+    </div>{# /card #}
   </div>
 </div>
+
 {% endblock %}

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Background rounded square -->
+  <rect width="32" height="32" rx="6" fill="#2563eb"/>
+  <!-- Box icon (inventory/asset symbol) -->
+  <!-- Bottom half of box -->
+  <path d="M6 17h20v9a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V17z" fill="white" opacity="0.95"/>
+  <!-- Top lid of box -->
+  <path d="M5 12a1 1 0 0 1 1-1h20a1 1 0 0 1 1 1v5H5v-5z" fill="white" opacity="0.7"/>
+  <!-- Lid flap -->
+  <path d="M13 6h6l2 5H11l2-5z" fill="white" opacity="0.55"/>
+  <!-- Center stripe on box body -->
+  <rect x="14" y="17" width="4" height="4" rx="0.5" fill="#2563eb" opacity="0.6"/>
+</svg>

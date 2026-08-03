@@ -32,6 +32,8 @@ urlpatterns = [
     path('items/<int:pk>/update/',       views.item_update,      name='item_update'),
     path('items/<int:pk>/delete/',       views.item_delete,      name='item_delete'),
 
-    # ── Barcode Lookup (AJAX) ─────────────────────────────────────────────
-    path('barcode/',                     views.barcode_lookup,   name='barcode_lookup'),
+    # ── Barcode / QR Code ─────────────────────────────────────────────────
+    path('barcode/',                     views.barcode_lookup,       name='barcode_lookup'),
+    path('items/<int:pk>/qr/',           views.item_qr,              name='item_qr'),
+    path('scanner/',                     views.barcode_scanner_page, name='barcode_scanner'),
 ]

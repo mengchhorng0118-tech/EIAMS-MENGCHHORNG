@@ -1,9 +1,5 @@
 # apps/assets/urls.py
-"""
-Asset Module URL Configuration — EIAMS
-=======================================
-RESTful URL patterns for the complete Asset Transfer module.
-"""
+"""Asset Module URL Configuration — EIAMS"""
 
 from django.urls import path
 from . import views
@@ -19,14 +15,15 @@ urlpatterns = [
     path('<int:pk>/update/',             views.AssetUpdateView.as_view(), name='asset_update'),
     path('<int:pk>/delete/',             views.AssetDeleteView.as_view(), name='asset_delete'),
 
-    # ── Asset Transfers (full CRUD + workflow) ───────────────────
+    # ── Barcode / QR Code ───────────────────────────────────────
+    path('<int:pk>/qr/',                 views.AssetQRView.as_view(),     name='asset_qr'),
+
+    # ── Asset Transfers ──────────────────────────────────────────
     path('transfers/',                          views.TransferListView.as_view(),    name='transfer_list'),
     path('transfers/create/',                   views.TransferCreateView.as_view(),  name='transfer_create'),
     path('transfers/<int:pk>/',                 views.TransferDetailView.as_view(),  name='transfer_detail'),
     path('transfers/<int:pk>/update/',          views.TransferUpdateView.as_view(),  name='transfer_update'),
     path('transfers/<int:pk>/delete/',          views.TransferDeleteView.as_view(),  name='transfer_delete'),
-
-    # Workflow action endpoints (POST only)
     path('transfers/<int:pk>/approve/',  views.TransferApproveView.as_view(),  name='transfer_approve'),
     path('transfers/<int:pk>/reject/',   views.TransferRejectView.as_view(),   name='transfer_reject'),
     path('transfers/<int:pk>/complete/', views.TransferCompleteView.as_view(), name='transfer_complete'),

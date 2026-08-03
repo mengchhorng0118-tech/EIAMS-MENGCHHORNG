@@ -453,3 +453,41 @@ def barcode_lookup(request):
         })
     except InventoryItem.DoesNotExist:
         return JsonResponse({'success': False, 'message': 'Item Not Found. No matching barcode in the system.'})
+
+
+# ══════════════════════════════════════════════════════════════
+# BARCODE / QR CODE GENERATION VIEWS
+# ══════════════════════════════════════════════════════════════
+
+@login_required
+def item_qr(request, pk):
+    """
+    Generate and display a QR code for an inventory item.
+    The QR code encodes the full item detail URL so any phone can scan
+    and navigate directly to the item page.
+    """
+    from .barcodes import generate_qr, generate_barcode
+    item    = get_object_or_404(InventoryItem, pk=pk)
+    # Build the absolute detail URL for the QR payload
+    detail_url = request.build_absolute_uri(f'/inventory/items/{item.pk}/')
+    qr_img     = generate_qr(detail_url)
+    bc_img     = generate_barcode(item.barcode or item.item_code)
+
+    return render(request, 'inventory/item_barcode.html', {
+        'item':       item,
+        'qr_img':     qr_img,
+        'bc_img':     bc_img,
+        'page_title': f'QR / Barcode — {item.item_name}',
+        'detail_url': detail_url,
+    })
+
+
+@login_required
+def barcode_scanner_page(request):
+    """
+    Full-page barcode / QR scanner using the device camera (jsQR library).
+    Scanning redirects to the matching inventory item or asset detail page.
+    """
+    return render(request, 'inventory/barcode_scanner.html', {
+        'page_title': 'Barcode / QR Scanner',
+    })

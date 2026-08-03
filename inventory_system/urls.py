@@ -16,6 +16,14 @@ urlpatterns = [
     path('i18n/', include('django.conf.urls.i18n')),
 ]
 
+# Media files must be served regardless of DEBUG so uploaded profile pictures
+# and other user-uploaded files are accessible in both dev and local production.
+# Static files are handled by WhiteNoise middleware in production.
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
 urlpatterns += i18n_patterns(
     path('admin/', admin.site.urls),
     path('', RedirectView.as_view(url='/accounts/', permanent=False)),
@@ -28,10 +36,6 @@ urlpatterns += i18n_patterns(
     path('dashboard/',     include('apps.dashboard.urls')),
     prefix_default_language=False,
 )
-
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 handler404 = 'apps.accounts.views.error_404'
 handler500 = 'apps.accounts.views.error_500'

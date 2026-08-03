@@ -19,13 +19,13 @@ from django.views import View
 from django.views.generic import (
     ListView, CreateView, UpdateView, DetailView, DeleteView, TemplateView
 )
-
-from .models import Asset, AssetTransfer
 from .forms import (
+    AssetForm,
     AssetTransferForm, AssetTransferUpdateForm, TransferFilterForm,
     TransferApproveForm, TransferRejectForm,
     TransferCompleteForm, TransferCancelForm,
 )
+from .models import Asset, AssetTransfer
 from . import services
 
 
@@ -296,14 +296,8 @@ class AssetInfoView(LoginRequiredMixin, View):
 
 
 # ─────────────────────────────────────────────────────────────
-# EXISTING ASSET LIST / DETAIL / CREATE / UPDATE / DELETE
-# (kept for backward compatibility with existing URL references)
+# ASSET LIST / DETAIL / CREATE / UPDATE / DELETE
 # ─────────────────────────────────────────────────────────────
-from .forms import (
-    AssetTransferForm,   # re-export guard
-)
-from django.views.generic.base import TemplateResponseMixin
-
 
 class AssetListView(LoginRequiredMixin, ListView):
     model               = Asset
@@ -335,34 +329,60 @@ class AssetDetailView(LoginRequiredMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx['page_title'] = f"Asset: {self.object.asset_name}"
-        ctx['transfers']  = self.object.asset_transfers.order_by('-created_at')[:10]
+        from .models import MaintenanceRecord, AssetDisposal, AssetAuditLog
+        asset = self.object
+        ctx['page_title']  = f"Asset: {asset.asset_name}"
+        ctx['transfers']   = asset.asset_transfers.order_by('-created_at')[:10]
+        ctx['maintenance'] = MaintenanceRecord.objects.filter(asset=asset).order_by('-maintenance_date')[:10]
+        ctx['audit_logs']  = AssetAuditLog.objects.filter(asset=asset).order_by('-audit_date')[:10]
+        ctx['disposals']   = AssetDisposal.objects.filter(asset=asset).order_by('-created_at')[:10]
         return ctx
 
 
-from .forms import AssetTransferForm as _F
-from django.views.generic.edit import FormView
+
+class AssetCreateView(LoginRequiredMixin, CreateView):
+    model         = Asset
+    form_class    = AssetForm
+    template_name = 'assets/asset_form.html'
+    success_url   = reverse_lazy('assets:asset_list')
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['page_title'] = 'Add Asset'
+        ctx['action']     = 'Create'
+        return ctx
+
+    def form_valid(self, form):
+        messages.success(self.request, f'Asset "{form.instance.asset_name}" created successfully.')
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        messages.error(self.request, 'Please correct the errors below.')
+        return super().form_invalid(form)
 
 
-class AssetCreateView(LoginRequiredMixin, View):
-    def get(self, request):
-        from django.shortcuts import render
-        from .forms import AssetTransferForm
-        return render(request, 'assets/asset_form.html', {'page_title': 'Add Asset', 'action': 'Create'})
+class AssetUpdateView(LoginRequiredMixin, UpdateView):
+    model         = Asset
+    form_class    = AssetForm
+    template_name = 'assets/asset_form.html'
 
-    def post(self, request):
-        # Handled via separate form — placeholder kept for URL resolution
-        return redirect('assets:asset_list')
+    def get_success_url(self):
+        return reverse_lazy('assets:asset_detail', kwargs={'pk': self.object.pk})
 
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['page_title'] = f'Edit {self.object.asset_name}'
+        ctx['action']     = 'Update'
+        ctx['obj']        = self.object
+        return ctx
 
-class AssetUpdateView(LoginRequiredMixin, View):
-    def get(self, request, pk):
-        from django.shortcuts import render
-        asset = get_object_or_404(Asset, pk=pk)
-        return render(request, 'assets/asset_form.html', {'page_title': f'Edit {asset.asset_name}', 'action': 'Update', 'obj': asset})
+    def form_valid(self, form):
+        messages.success(self.request, f'Asset "{self.object.asset_name}" updated successfully.')
+        return super().form_valid(form)
 
-    def post(self, request, pk):
-        return redirect('assets:asset_list')
+    def form_invalid(self, form):
+        messages.error(self.request, 'Please correct the errors below.')
+        return super().form_invalid(form)
 
 
 class AssetDeleteView(LoginRequiredMixin, DeleteView):
@@ -372,11 +392,10 @@ class AssetDeleteView(LoginRequiredMixin, DeleteView):
 
 
 # ─────────────────────────────────────────────────────────────
-# MAINTENANCE / DISPOSAL  (stubs — existing functionality)
+# MAINTENANCE / DISPOSAL / AUDIT
 # ─────────────────────────────────────────────────────────────
+
 class MaintenanceListView(LoginRequiredMixin, ListView):
-    from .models import MaintenanceRecord as _M
-    model               = _M
     template_name       = 'assets/maintenance_list.html'
     context_object_name = 'records'
     paginate_by         = 15
@@ -396,8 +415,6 @@ class MaintenanceCreateView(LoginRequiredMixin, View):
 
 
 class DisposalListView(LoginRequiredMixin, ListView):
-    from .models import AssetDisposal as _D
-    model               = _D
     template_name       = 'assets/disposal_list.html'
     context_object_name = 'disposals'
     paginate_by         = 15
@@ -428,8 +445,6 @@ class DisposalApproveView(LoginRequiredMixin, View):
 
 
 class AuditListView(LoginRequiredMixin, ListView):
-    from .models import AssetAuditLog as _A
-    model               = _A
     template_name       = 'assets/audit_list.html'
     context_object_name = 'audits'
     paginate_by         = 15
@@ -446,3 +461,28 @@ class AuditCreateView(LoginRequiredMixin, View):
 
     def post(self, request):
         return redirect('assets:audit_list')
+
+
+# ─────────────────────────────────────────────────────────────
+# BARCODE / QR CODE — Asset
+# ─────────────────────────────────────────────────────────────
+
+class AssetQRView(LoginRequiredMixin, DetailView):
+    """
+    Generate and display QR code + barcode for a single Asset.
+    The QR code encodes the full asset detail URL for mobile scanning.
+    """
+    model               = Asset
+    template_name       = 'assets/asset_barcode.html'
+    context_object_name = 'asset'
+
+    def get_context_data(self, **kwargs):
+        from apps.inventory.barcodes import generate_qr, generate_barcode
+        ctx        = super().get_context_data(**kwargs)
+        asset      = self.object
+        detail_url = self.request.build_absolute_uri(f'/assets/{asset.pk}/')
+        ctx['qr_img']     = generate_qr(detail_url)
+        ctx['bc_img']     = generate_barcode(asset.barcode or asset.asset_code)
+        ctx['detail_url'] = detail_url
+        ctx['page_title'] = f'QR / Barcode — {asset.asset_name}'
+        return ctx

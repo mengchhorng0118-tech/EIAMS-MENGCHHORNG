@@ -26,10 +26,11 @@ class Command(BaseCommand):
         self._seed_notifications()
         self.stdout.write(self.style.SUCCESS('\n✅ All data seeded successfully!'))
         self.stdout.write(self.style.WARNING('\n🔑 Login credentials:'))
-        self.stdout.write('   superadmin / Admin@1234')
-        self.stdout.write('   admin      / Admin@1234')
-        self.stdout.write('   manager    / Admin@1234')
-        self.stdout.write('   staff      / Admin@1234')
+        self.stdout.write('   mengchhorng / Admin@1234  (Super Admin - full access)')
+        self.stdout.write('   superadmin  / Admin@1234  (Super Admin)')
+        self.stdout.write('   admin       / Admin@1234  (Admin)')
+        self.stdout.write('   manager     / Admin@1234  (Manager)')
+        self.stdout.write('   staff1      / Admin@1234  (Staff)')
 
     # ── Roles ─────────────────────────────────────────────────
     def _seed_roles(self):
@@ -48,29 +49,41 @@ class Command(BaseCommand):
     # ── Users ─────────────────────────────────────────────────
     def _seed_users(self):
         from apps.accounts.models import Role, User
+        # username, full_name, email, role_name, department, gender, is_superuser
         users_data = [
-            ('superadmin', 'Sophea Keo',      'superadmin@eiams.com', 'Super Admin', 'IT Department',  'Male'),
-            ('admin',      'Dara Chan',        'admin@eiams.com',      'Admin',       'Administration', 'Male'),
-            ('manager',    'Sreymom Pich',     'manager@eiams.com',    'Manager',     'Operations',     'Female'),
-            ('staff1',     'Borey Nhem',       'borey@eiams.com',      'Staff',       'Warehouse',      'Male'),
-            ('staff2',     'Channary Sok',     'channary@eiams.com',   'Staff',       'Warehouse',      'Female'),
-            ('staff3',     'Virak Mao',        'virak@eiams.com',      'Staff',       'Procurement',    'Male'),
+            ('superadmin',   'Sophea Keo',     'superadmin@eiams.com',   'Super Admin', 'IT Department',   'Male',   True),
+            ('mengchhorng',  'MENGCHHORNG',    'mengchhorng@eiams.com',  'Super Admin', 'Administration',  'Male',   True),
+            ('admin',        'Meng',      'admin@eiams.com',        'Admin',       'Administration',  'Male',   False),
+            ('manager',      'Sreymom Pich',   'manager@eiams.com',      'Manager',     'Operations',      'Female', False),
+            ('staff1',       'Borey Nhem',     'borey@eiams.com',        'Staff',       'Warehouse',       'Male',   False),
+            ('staff2',       'Channary Sok',   'channary@eiams.com',     'Staff',       'Warehouse',       'Female', False),
+            ('staff3',       'Virak Mao',      'virak@eiams.com',        'Staff',       'Procurement',     'Male',   False),
         ]
-        for username, full_name, email, role_name, dept, gender in users_data:
+        for username, full_name, email, role_name, dept, gender, is_su in users_data:
             role = Role.objects.get(role_name=role_name)
             if not User.objects.filter(username=username).exists():
                 u = User.objects.create_user(
                     username=username, email=email,
                     password='Admin@1234', full_name=full_name,
                     role=role, department=dept, gender=gender,
-                    status='Active', is_staff=(role_name in ['Super Admin', 'Admin']),
-                    is_superuser=(role_name == 'Super Admin'),
+                    status='Active',
+                    is_staff=True if is_su or role_name in ['Super Admin', 'Admin'] else False,
+                    is_superuser=is_su,
                 )
                 names = full_name.split(' ', 1)
                 u.first_name = names[0]
                 u.last_name  = names[1] if len(names) > 1 else ''
                 u.save()
-                self.stdout.write(f'  ✔ User: {username}')
+                self.stdout.write(f'  ✔ User: {username} ({role_name})')
+            else:
+                # Ensure existing mengchhorng always has full superuser access
+                if username == 'mengchhorng':
+                    u = User.objects.get(username=username)
+                    u.is_staff = True
+                    u.is_superuser = True
+                    u.role = role
+                    u.save()
+                    self.stdout.write(f'  ↻ Updated: {username} (Super Admin)')
 
     # ── Categories ────────────────────────────────────────────
     def _seed_categories(self):

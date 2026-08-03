@@ -75,6 +75,13 @@
       </a></li>
     </ul>
 
+    <div class="nav-section-label" aria-hidden="true">{% trans "Tools" %}</div>
+    <ul class="nav flex-column">
+      <li><a href="{% url 'inventory:barcode_scanner' %}" class="nav-link {% if 'scanner' in request.path %}active{% endif %}">
+        <i class="bi bi-qr-code-scan" aria-hidden="true"></i><span>{% trans "QR / Barcode Scanner" %}</span>
+      </a></li>
+    </ul>
+
     {% if user.is_super_admin or user.is_admin_or_above %}
     <div class="nav-section-label" aria-hidden="true">{% trans "Administration" %}</div>
     <ul class="nav flex-column">

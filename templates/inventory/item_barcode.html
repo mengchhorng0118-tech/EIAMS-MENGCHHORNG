@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.barcode-card { border: 2px dashed var(--bs-border-color); border-radius: 12px; }
+.qr-img, .bc-img { max-width: 100%; border-radius: 8px; box-shadow: 0 2px 12px rgba(0,0,0,.1); }
+@media print {
+  .no-print { display: none !important; }
+  .barcode-card { border: 1px solid #ccc; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1><i class="bi bi-qr-code me-2 text-primary"></i>QR / Barcode — {{ item.item_name }}</h1>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item"><a href="{% url 'inventory:item_list' %}">Items</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'inventory:item_detail' item.pk %}">{{ item.item_code }}</a></li>
+        <li class="breadcrumb-item active">QR / Barcode</li>
+      </ol>
+    </nav>
+  </div>
+  <div class="no-print d-flex gap-2">
+    <button onclick="window.print()" class="btn btn-outline-primary">
+      <i class="bi bi-printer me-1"></i>Print
+    </button>
+    <a href="{% url 'inventory:item_detail' item.pk %}" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left me-1"></i>Back
+    </a>
+  </div>
+</div>
+
+<div class="row g-4 justify-content-center">
+
+  {# ── QR Code ────────────────────────────────────────────── #}
+  <div class="col-md-5">
+    <div class="card barcode-card text-center p-4">
+      <h6 class="fw-semibold text-muted text-uppercase mb-3" style="font-size:.72rem;letter-spacing:.08em;">
+        <i class="bi bi-qr-code me-1"></i>QR Code
+      </h6>
+      {% if qr_img %}
+        <img src="{{ qr_img }}" alt="QR Code for {{ item.item_code }}" class="qr-img mx-auto d-block" style="width:220px;height:220px;">
+      {% else %}
+        <div class="text-muted py-5"><i class="bi bi-exclamation-circle me-2"></i>QR generation failed.</div>
+      {% endif %}
+      <div class="mt-3">
+        <div class="fw-bold fs-5">{{ item.item_code }}</div>
+        <div class="text-muted" style="font-size:.85rem;">{{ item.item_name }}</div>
+        <div class="text-muted" style="font-size:.75rem;">Scan to open item detail</div>
+      </div>
+    </div>
+  </div>
+
+  {# ── Barcode ─────────────────────────────────────────────── #}
+  <div class="col-md-7">
+    <div class="card barcode-card text-center p-4">
+      <h6 class="fw-semibold text-muted text-uppercase mb-3" style="font-size:.72rem;letter-spacing:.08em;">
+        <i class="bi bi-upc me-1"></i>Barcode (Code 128)
+      </h6>
+      {% if bc_img %}
+        <img src="{{ bc_img }}" alt="Barcode for {{ item.item_code }}" class="bc-img mx-auto d-block" style="max-height:120px;">
+      {% else %}
+        <div class="text-muted py-5"><i class="bi bi-exclamation-circle me-2"></i>Barcode generation failed.</div>
+      {% endif %}
+      <div class="mt-3">
+        <div class="fw-bold fs-5">{{ item.barcode|default:item.item_code }}</div>
+        <div class="text-muted" style="font-size:.85rem;">{{ item.item_name }}</div>
+      </div>
+    </div>
+
+    {# ── Item Info ──────────────────────────────────────────── #}
+    <div class="card mt-3 p-3">
+      <h6 class="fw-semibold mb-3"><i class="bi bi-info-circle me-2 text-primary"></i>Item Details</h6>
+      <div class="row g-2" style="font-size:.85rem;">
+        <div class="col-5 text-muted">Item Code</div>
+        <div class="col-7 fw-medium">{{ item.item_code }}</div>
+        <div class="col-5 text-muted">Category</div>
+        <div class="col-7">{{ item.category }}</div>
+        <div class="col-5 text-muted">Current Stock</div>
+        <div class="col-7">
+          {{ item.current_qty }} {{ item.unit }}
+          {% if item.is_low_stock %}
+            <span class="badge bg-danger ms-1">Low Stock</span>
+          {% endif %}
+        </div>
+        <div class="col-5 text-muted">Supplier</div>
+        <div class="col-7">{{ item.supplier|default:"—" }}</div>
+        <div class="col-5 text-muted">Status</div>
+        <div class="col-7">
+          <span class="badge {% if item.status == 'Active' %}bg-success{% else %}bg-danger{% endif %}">
+            {{ item.status }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+{# ── Usage Guide ─────────────────────────────────────────── #}
+<div class="row mt-4 no-print">
+  <div class="col-12">
+    <div class="alert alert-info d-flex gap-2">
+      <i class="bi bi-lightbulb-fill fs-5 flex-shrink-0 mt-1"></i>
+      <div>
+        <strong>How to use:</strong>
+        Print this page and attach the QR code or barcode label to the physical item.
+        Use the <a href="{% url 'inventory:barcode_scanner' %}" class="alert-link">Camera Scanner</a>
+        to scan and navigate directly to this item's page.
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

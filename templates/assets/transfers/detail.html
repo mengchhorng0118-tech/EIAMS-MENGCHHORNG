@@ -88,9 +88,9 @@
     <div class="section-card">
       <div class="sc-hd"><i class="bi bi-people text-primary"></i>People</div>
       <div class="sc-bd">
-        <div class="dl-row"><span class="dl-label">Requested By</span><span class="dl-val">{{ transfer.requested_by.get_full_name|default:transfer.requested_by.username }}</span></div>
-        <div class="dl-row"><span class="dl-label">Approved By</span><span class="dl-val">{{ transfer.approved_by.get_full_name|default:transfer.approved_by.username|default:"—" }}</span></div>
-        <div class="dl-row"><span class="dl-label">Received By</span><span class="dl-val">{{ transfer.received_by.get_full_name|default:transfer.received_by.username|default:"—" }}</span></div>
+        <div class="dl-row"><span class="dl-label">Requested By</span><span class="dl-val">{{ transfer.requested_by.full_name|default:transfer.requested_by.username|default:"—" }}</span></div>
+        <div class="dl-row"><span class="dl-label">Approved By</span><span class="dl-val">{{ transfer.approved_by.full_name|default:"—" }}</span></div>
+        <div class="dl-row"><span class="dl-label">Received By</span><span class="dl-val">{{ transfer.received_by.full_name|default:"—" }}</span></div>
         {% if transfer.approved_at %}<div class="dl-row"><span class="dl-label">Approved At</span><span class="dl-val">{{ transfer.approved_at|date:"N j, Y, P" }}</span></div>{% endif %}
         {% if transfer.completed_at %}<div class="dl-row"><span class="dl-label">Completed At</span><span class="dl-val">{{ transfer.completed_at|date:"N j, Y, P" }}</span></div>{% endif %}
       </div>

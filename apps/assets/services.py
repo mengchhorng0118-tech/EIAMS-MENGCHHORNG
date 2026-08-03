@@ -246,9 +246,10 @@ def get_transfer_stats():
         completed, cancelled, rejected, recent
     """
     from django.db.models import Count
-    from datetime import date, timedelta
+    from django.utils import timezone
+    from datetime import timedelta
 
-    today = date.today()
+    today = timezone.now().date()
     qs    = AssetTransfer.objects
 
     # Monthly chart — last 6 months

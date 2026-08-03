@@ -29,7 +29,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-eiams-secret-key-change-in-production-biu-sad-2026'
 
 # SECURITY WARNING: Don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 
 # Hosts allowed to serve this application

@@ -137,8 +137,8 @@
           </td>
           <td class="text-muted">{{ t.from_location }}</td>
           <td class="text-muted">{{ t.to_location }}</td>
-          <td>{{ t.requested_by.get_full_name|default:t.requested_by.username }}</td>
-          <td>{{ t.approved_by.get_full_name|default:t.approved_by.username|default:"—" }}</td>
+          <td>{{ t.requested_by.full_name|default:t.requested_by.username|default:"—" }}</td>
+          <td>{{ t.approved_by.full_name|default:"—" }}</td>
           <td>
             <span class="badge transfer-badge bg-{{ t.status_badge_class }}">
               {{ t.get_status_display }}
