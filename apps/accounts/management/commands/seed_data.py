@@ -1,20 +1,18 @@
 """
 Management command: seed_data
 Usage: python manage.py seed_data
-Seeds the database with realistic sample data for EIAMS.
+Seeds the database with iPhone 12–17 phone stock and asset data for EIAMS.
 """
 
 from django.core.management.base import BaseCommand
-from django.utils import timezone
-from datetime import date, timedelta
-import random
+from datetime import date
 
 
 class Command(BaseCommand):
-    help = 'Seed the database with realistic sample data'
+    help = 'Seed the database with iPhone 12–17 phone inventory and asset data'
 
     def handle(self, *args, **options):
-        self.stdout.write(self.style.SUCCESS('=== EIAMS Data Seeder ==='))
+        self.stdout.write(self.style.SUCCESS('=== EIAMS Phone Data Seeder ==='))
         self._seed_roles()
         self._seed_users()
         self._seed_categories()
@@ -24,7 +22,7 @@ class Command(BaseCommand):
         self._seed_assets()
         self._seed_stock_movements()
         self._seed_notifications()
-        self.stdout.write(self.style.SUCCESS('\n✅ All data seeded successfully!'))
+        self.stdout.write(self.style.SUCCESS('\n✅ All phone data seeded successfully!'))
         self.stdout.write(self.style.WARNING('\n🔑 Login credentials:'))
         self.stdout.write('   mengchhorng / Admin@1234  (Super Admin - full access)')
         self.stdout.write('   superadmin  / Admin@1234  (Super Admin)')
@@ -49,15 +47,14 @@ class Command(BaseCommand):
     # ── Users ─────────────────────────────────────────────────
     def _seed_users(self):
         from apps.accounts.models import Role, User
-        # username, full_name, email, role_name, department, gender, is_superuser
         users_data = [
-            ('superadmin',   'Sophea Keo',     'superadmin@eiams.com',   'Super Admin', 'IT Department',   'Male',   True),
-            ('mengchhorng',  'MENGCHHORNG',    'mengchhorng@eiams.com',  'Super Admin', 'Administration',  'Male',   True),
-            ('admin',        'Meng',      'admin@eiams.com',        'Admin',       'Administration',  'Male',   False),
-            ('manager',      'Sreymom Pich',   'manager@eiams.com',      'Manager',     'Operations',      'Female', False),
-            ('staff1',       'Borey Nhem',     'borey@eiams.com',        'Staff',       'Warehouse',       'Male',   False),
-            ('staff2',       'Channary Sok',   'channary@eiams.com',     'Staff',       'Warehouse',       'Female', False),
-            ('staff3',       'Virak Mao',      'virak@eiams.com',        'Staff',       'Procurement',     'Male',   False),
+            ('superadmin',  'Sophea Keo',    'superadmin@eiams.com',  'Super Admin', 'IT Department',  'Male',   True),
+            ('mengchhorng', 'MENGCHHORNG',   'mengchhorng@eiams.com', 'Super Admin', 'Administration', 'Male',   True),
+            ('admin',       'Dara Chan',     'admin@eiams.com',       'Admin',       'Administration', 'Male',   False),
+            ('manager',     'Sreymom Pich',  'manager@eiams.com',     'Manager',     'Operations',     'Female', False),
+            ('staff1',      'Borey Nhem',    'borey@eiams.com',       'Staff',       'Warehouse',      'Male',   False),
+            ('staff2',      'Channary Sok',  'channary@eiams.com',    'Staff',       'Warehouse',      'Female', False),
+            ('staff3',      'Virak Mao',     'virak@eiams.com',       'Staff',       'Procurement',    'Male',   False),
         ]
         for username, full_name, email, role_name, dept, gender, is_su in users_data:
             role = Role.objects.get(role_name=role_name)
@@ -76,7 +73,6 @@ class Command(BaseCommand):
                 u.save()
                 self.stdout.write(f'  ✔ User: {username} ({role_name})')
             else:
-                # Ensure existing mengchhorng always has full superuser access
                 if username == 'mengchhorng':
                     u = User.objects.get(username=username)
                     u.is_staff = True
@@ -85,20 +81,12 @@ class Command(BaseCommand):
                     u.save()
                     self.stdout.write(f'  ↻ Updated: {username} (Super Admin)')
 
-    # ── Categories ────────────────────────────────────────────
+    # ── Categories — Phone only ────────────────────────────────
     def _seed_categories(self):
         from apps.inventory.models import Category
         cats = [
-            ('Office Supplies',      'Inventory', 'Pens, paper, staplers, and general office consumables'),
-            ('IT Equipment',         'Inventory', 'Cables, peripherals, toners, and IT consumables'),
-            ('Cleaning Supplies',    'Inventory', 'Cleaning agents, mops, and hygiene products'),
-            ('Medical Supplies',     'Inventory', 'First-aid and medical consumables'),
-            ('Kitchen Supplies',     'Inventory', 'Coffee, tea, water dispenser supplies'),
-            ('Computers & Laptops',  'Asset',     'Desktop computers, laptops, and workstations'),
-            ('Networking Equipment', 'Asset',     'Routers, switches, access points, and cables'),
-            ('Furniture',            'Asset',     'Desks, chairs, cabinets, and office furniture'),
-            ('Vehicles',             'Asset',     'Company cars, motorcycles, and transport vehicles'),
-            ('Audio Visual',         'Asset',     'Projectors, monitors, speakers, and AV equipment'),
+            ('Mobile Phones',  'Inventory', 'Smartphones and mobile devices stock for staff use'),
+            ('Mobile Devices', 'Asset',     'Company-owned smartphones tracked as individual assets'),
         ]
         for name, ctype, desc in cats:
             obj, created = Category.objects.get_or_create(
@@ -112,14 +100,13 @@ class Command(BaseCommand):
     def _seed_locations(self):
         from apps.inventory.models import Location
         locs = [
-            ('Main Warehouse',       'Warehouse',  'Building A, Ground Floor, Phnom Penh'),
-            ('IT Storage Room',      'Office',     'Building B, Room 102'),
-            ('Head Office',          'Office',     'Floor 5, Tower Block, Central Business District'),
-            ('Branch - Siem Reap',   'Branch',     'National Road 6, Siem Reap Province'),
-            ('Branch - Sihanoukville','Branch',    'Ekareach Street, Sihanoukville'),
-            ('Finance Department',   'Department', 'Floor 3, Tower Block'),
-            ('HR Department',        'Department', 'Floor 4, Tower Block'),
-            ('Server Room',          'Building',   'Basement, Tower Block'),
+            ('Main Warehouse',        'Warehouse',  'Building A, Ground Floor, Phnom Penh'),
+            ('Head Office',           'Office',     'Floor 5, Tower Block, Central Business District'),
+            ('IT Storage Room',       'Office',     'Building B, Room 102'),
+            ('Finance Department',    'Department', 'Floor 3, Tower Block'),
+            ('HR Department',         'Department', 'Floor 4, Tower Block'),
+            ('Branch - Siem Reap',    'Branch',     'National Road 6, Siem Reap Province'),
+            ('Branch - Sihanoukville','Branch',     'Ekareach Street, Sihanoukville'),
         ]
         for name, ltype, addr in locs:
             obj, created = Location.objects.get_or_create(
@@ -129,18 +116,13 @@ class Command(BaseCommand):
             if created:
                 self.stdout.write(f'  ✔ Location: {name}')
 
-    # ── Suppliers ─────────────────────────────────────────────
+    # ── Suppliers — Apple only ─────────────────────────────────
     def _seed_suppliers(self):
         from apps.inventory.models import Supplier
         sups = [
-            ('TechWorld Cambodia',   'Sok Visal',   '+855 23 456 789', 'info@techworld.kh',     'Mao Tse Toung Blvd, Phnom Penh'),
-            ('Office Pro Co.',       'Dara Lim',    '+855 12 345 678', 'sales@officepro.kh',    'Street 271, Phnom Penh'),
-            ('CleanMart Supply',     'Sreyla Heng',  '+855 17 234 567', 'order@cleanmart.kh',    'Russian Blvd, Phnom Penh'),
-            ('MediCare Supplies',    'Vanna Keo',    '+855 11 876 543', 'supply@medicare.kh',    'Monivong Blvd, Phnom Penh'),
-            ('Dell Cambodia',        'James Tan',    '+855 23 987 654', 'cambodia@dell.com',     'Norodom Blvd, Phnom Penh'),
-            ('Cisco Systems KH',     'Alice Wong',   '+855 23 654 321', 'kh@cisco.com',          'Sothearos Blvd, Phnom Penh'),
-            ('Toyota Cambodia',      'Bunna Ros',    '+855 23 555 444', 'fleet@toyota.kh',       'National Road 4, Phnom Penh'),
-            ('mengrhhomg Trading',   'Mengr Hohomg', '+855 16 111 222', 'info@mengrhhomg.kh',    'Street 51, Phnom Penh'),
+            ('Apple Cambodia',       'Kevin Chan',  '+855 23 888 777', 'sales@apple-kh.com',  'Preah Monivong Blvd, Phnom Penh'),
+            ('iStore Phnom Penh',    'Sina Rith',   '+855 12 999 888', 'info@istore.kh',      'Street 51, BKK1, Phnom Penh'),
+            ('TechWorld Cambodia',   'Sok Visal',   '+855 23 456 789', 'info@techworld.kh',   'Mao Tse Toung Blvd, Phnom Penh'),
         ]
         for name, contact, phone, email, addr in sups:
             obj, created = Supplier.objects.get_or_create(
@@ -151,45 +133,61 @@ class Command(BaseCommand):
             if created:
                 self.stdout.write(f'  ✔ Supplier: {name}')
 
-    # ── Inventory Items ───────────────────────────────────────
+    # ── Inventory Items — iPhone 12–17 stock ──────────────────
     def _seed_inventory_items(self):
         from apps.inventory.models import Category, Supplier, InventoryItem
         from decimal import Decimal
+
+        # (code, name, sup_name, unit, price, qty, min_qty, barcode, description)
         items = [
-            # (code, name, cat_name, sup_name, unit, price, qty, min_qty, barcode)
-            ('INV-0001','A4 Copy Paper (Ream)',     'Office Supplies','Office Pro Co.','ream',   4.50,  120, 20, 'BC-0001'),
-            ('INV-0002','Ballpoint Pens (Box)',     'Office Supplies','Office Pro Co.','box',    2.80,   45, 10, 'BC-0002'),
-            ('INV-0003','Stapler',                  'Office Supplies','Office Pro Co.','pcs',    5.00,   18,  5, 'BC-0003'),
-            ('INV-0004','Staple Pins (Box)',         'Office Supplies','Office Pro Co.','box',    1.20,   60, 15, 'BC-0004'),
-            ('INV-0005','Sticky Notes (Pack)',       'Office Supplies','Office Pro Co.','pack',   1.50,   80, 20, 'BC-0005'),
-            ('INV-0006','HP Laser Toner 85A',        'IT Equipment',  'TechWorld Cambodia','pcs', 42.00,   8,  3, 'BC-0006'),
-            ('INV-0007','USB Flash Drive 32GB',      'IT Equipment',  'TechWorld Cambodia','pcs',  8.50,  25,  5, 'BC-0007'),
-            ('INV-0008','HDMI Cable 1.8m',           'IT Equipment',  'TechWorld Cambodia','pcs',  4.20,  30,  8, 'BC-0008'),
-            ('INV-0009','Cat6 Ethernet Cable (m)',   'IT Equipment',  'Cisco Systems KH', 'meter', 0.80, 200, 50, 'BC-0009'),
-            ('INV-0010','AA Batteries (Pack of 4)',  'IT Equipment',  'TechWorld Cambodia','pack',  2.00,  40,  8, 'BC-0010'),
-            ('INV-0011','Floor Cleaner 5L',          'Cleaning Supplies','CleanMart Supply','bottle',6.50, 20,  5, 'BC-0011'),
-            ('INV-0012','Hand Sanitizer 500ml',      'Cleaning Supplies','CleanMart Supply','bottle',3.20, 35, 10, 'BC-0012'),
-            ('INV-0013','Toilet Paper (24 rolls)',   'Cleaning Supplies','CleanMart Supply','pack',  8.00, 15,  5, 'BC-0013'),
-            ('INV-0014','Rubber Gloves (Pair)',      'Cleaning Supplies','CleanMart Supply','pair',  1.00, 50, 15, 'BC-0014'),
-            ('INV-0015','First Aid Kit',             'Medical Supplies','MediCare Supplies','set',  28.00,  4,  2, 'BC-0015'),
-            ('INV-0016','Paracetamol 500mg (Strip)', 'Medical Supplies','MediCare Supplies','strip', 1.50, 30, 10, 'BC-0016'),
-            ('INV-0017','Instant Coffee 200g',       'Kitchen Supplies','Office Pro Co.',   'jar',   6.00, 12,  4, 'BC-0017'),
-            ('INV-0018','Mineral Water 1.5L (case)', 'Kitchen Supplies','Office Pro Co.',   'case',  5.50, 20,  6, 'BC-0018'),
-            ('INV-0019','Paper Clips (Box)',          'Office Supplies','Office Pro Co.',   'box',   0.90, 3,   5, 'BC-0019'),
-            ('INV-0020','Whiteboard Marker Set',     'Office Supplies','Office Pro Co.',   'set',   4.00, 7,   4, 'BC-0020'),
+            ('INV-PH-001', 'Apple iPhone 12 (128GB)',  'Apple Cambodia', 'pcs',  549.00, 10, 3, 'PH-IP12-128',
+             'iPhone 12 — 6.1" OLED, A14 Bionic, 12MP dual camera, 5G. Space Gray / White / Blue / Red / Green / Purple.'),
+            ('INV-PH-002', 'Apple iPhone 12 (256GB)',  'Apple Cambodia', 'pcs',  599.00,  8, 2, 'PH-IP12-256',
+             'iPhone 12 — 6.1" OLED, A14 Bionic, 12MP dual camera, 5G. 256GB storage variant.'),
+            ('INV-PH-003', 'Apple iPhone 13 (128GB)',  'Apple Cambodia', 'pcs',  599.00, 10, 3, 'PH-IP13-128',
+             'iPhone 13 — 6.1" OLED, A15 Bionic, 12MP dual camera, Cinematic mode, 5G.'),
+            ('INV-PH-004', 'Apple iPhone 13 (256GB)',  'Apple Cambodia', 'pcs',  649.00,  8, 2, 'PH-IP13-256',
+             'iPhone 13 — 6.1" OLED, A15 Bionic, 12MP dual camera, 5G. 256GB storage variant.'),
+            ('INV-PH-005', 'Apple iPhone 14 (128GB)',  'Apple Cambodia', 'pcs',  699.00,  8, 3, 'PH-IP14-128',
+             'iPhone 14 — 6.1" OLED, A15 Bionic, 12MP dual camera, Crash Detection, Emergency SOS, 5G.'),
+            ('INV-PH-006', 'Apple iPhone 14 (256GB)',  'Apple Cambodia', 'pcs',  749.00,  6, 2, 'PH-IP14-256',
+             'iPhone 14 — 6.1" OLED, A15 Bionic, 12MP dual camera, 5G. 256GB storage variant.'),
+            ('INV-PH-007', 'Apple iPhone 15 (128GB)',  'Apple Cambodia', 'pcs',  799.00,  8, 3, 'PH-IP15-128',
+             'iPhone 15 — 6.1" OLED, A16 Bionic, 48MP main camera, Dynamic Island, USB-C, 5G.'),
+            ('INV-PH-008', 'Apple iPhone 15 (256GB)',  'Apple Cambodia', 'pcs',  859.00,  6, 2, 'PH-IP15-256',
+             'iPhone 15 — 6.1" OLED, A16 Bionic, 48MP camera, Dynamic Island, USB-C, 5G. 256GB variant.'),
+            ('INV-PH-009', 'Apple iPhone 15 Pro (256GB)', 'iStore Phnom Penh', 'pcs', 999.00, 5, 2, 'PH-IP15P-256',
+             'iPhone 15 Pro — 6.1" Super Retina XDR, A17 Pro, 48MP triple camera, Titanium frame, USB-C 3.0, 5G.'),
+            ('INV-PH-010', 'Apple iPhone 16 (128GB)',  'Apple Cambodia', 'pcs',  899.00,  6, 2, 'PH-IP16-128',
+             'iPhone 16 — 6.1" OLED, A18 chip, 48MP camera, Camera Control button, Apple Intelligence, USB-C, 5G.'),
+            ('INV-PH-011', 'Apple iPhone 16 (256GB)',  'Apple Cambodia', 'pcs',  959.00,  5, 2, 'PH-IP16-256',
+             'iPhone 16 — 6.1" OLED, A18 chip, 48MP camera, Apple Intelligence, USB-C, 5G. 256GB variant.'),
+            ('INV-PH-012', 'Apple iPhone 16 Pro (256GB)', 'iStore Phnom Penh', 'pcs', 1099.00, 4, 2, 'PH-IP16P-256',
+             'iPhone 16 Pro — 6.3" Super Retina XDR, A18 Pro, 48MP triple camera, Apple Intelligence, USB-C 3.0, 5G.'),
+            ('INV-PH-013', 'Apple iPhone 17 (256GB)',  'Apple Cambodia', 'pcs', 1099.00,  5, 2, 'PH-IP17-256',
+             'iPhone 17 — 6.3" OLED, A19 chip, 48MP triple camera, Apple Intelligence, USB-C, 5G.'),
+            ('INV-PH-014', 'Apple iPhone 17 Pro (256GB)', 'iStore Phnom Penh', 'pcs', 1299.00, 3, 2, 'PH-IP17P-256',
+             'iPhone 17 Pro — 6.3" Super Retina XDR, A19 Pro, periscope triple camera, Apple Intelligence, USB-C, 5G.'),
+            ('INV-PH-015', 'Apple iPhone 17 Pro Max (512GB)', 'iStore Phnom Penh', 'pcs', 1499.00, 3, 1, 'PH-IP17PM-512',
+             'iPhone 17 Pro Max — 6.9" Super Retina XDR, A19 Pro, periscope triple camera, 5G. Top of the line.'),
         ]
-        for code, name, cat_name, sup_name, unit, price, qty, min_qty, barcode in items:
+        cat = None
+        from apps.inventory.models import Category
+        cat = Category.objects.get(category_name='Mobile Phones', category_type='Inventory')
+
+        for code, name, sup_name, unit, price, qty, min_qty, barcode, desc in items:
             if not InventoryItem.objects.filter(item_code=code).exists():
-                cat = Category.objects.get(category_name=cat_name, category_type='Inventory')
+                from apps.inventory.models import Supplier
                 sup = Supplier.objects.get(supplier_name=sup_name)
                 InventoryItem.objects.create(
                     item_code=code, item_name=name, category=cat, supplier=sup,
                     unit=unit, purchase_price=Decimal(str(price)),
-                    current_qty=qty, min_qty=min_qty, barcode=barcode, status='Active'
+                    current_qty=qty, min_qty=min_qty, barcode=barcode,
+                    description=desc, status='Active'
                 )
                 self.stdout.write(f'  ✔ Item: {name}')
 
-    # ── Assets ────────────────────────────────────────────────
+    # ── Assets — individual iPhones tracked by serial number ──
     def _seed_assets(self):
         from apps.inventory.models import Category, Supplier, Location
         from apps.accounts.models import User
@@ -197,31 +195,51 @@ class Command(BaseCommand):
         from decimal import Decimal
 
         mgr = User.objects.filter(role__role_name='Manager').first()
-        hq  = Location.objects.get(location_name='Head Office')
-        it_room = Location.objects.get(location_name='IT Storage Room')
-        warehouse = Location.objects.get(location_name='Main Warehouse')
 
+        # (code, name, serial, barcode, price, status, location_name, purchase_date, warranty_date)
         assets_data = [
-            # (code, name, cat_name, sup_name, serial, barcode, price, status, location_name, purchase_date, warranty_date)
-            ('AST-0001','Dell Latitude 5520 Laptop',   'Computers & Laptops',  'Dell Cambodia',     'DL5520-001','BA-0001',1250.00,'Assigned',   'Head Office',       '2023-01-15','2026-01-15'),
-            ('AST-0002','Dell Latitude 5520 Laptop',   'Computers & Laptops',  'Dell Cambodia',     'DL5520-002','BA-0002',1250.00,'Assigned',   'Head Office',       '2023-01-15','2026-01-15'),
-            ('AST-0003','HP ProDesk 600 Desktop',      'Computers & Laptops',  'TechWorld Cambodia','HPD600-001','BA-0003', 850.00,'Available',  'IT Storage Room',   '2022-06-10','2025-06-10'),
-            ('AST-0004','HP ProDesk 600 Desktop',      'Computers & Laptops',  'TechWorld Cambodia','HPD600-002','BA-0004', 850.00,'Assigned',   'Finance Department','2022-06-10','2025-06-10'),
-            ('AST-0005','HP ProDesk 600 Desktop',      'Computers & Laptops',  'TechWorld Cambodia','HPD600-003','BA-0005', 850.00,'Under Maintenance','IT Storage Room','2022-06-10','2025-06-10'),
-            ('AST-0006','Cisco Catalyst 2960 Switch',  'Networking Equipment', 'Cisco Systems KH',  'CS2960-001','BA-0006',1800.00,'Available',  'Server Room',       '2021-03-20','2024-03-20'),
-            ('AST-0007','Cisco Meraki Access Point',   'Networking Equipment', 'Cisco Systems KH',  'CMRAP-001', 'BA-0007', 450.00,'Available',  'Head Office',       '2022-08-05','2025-08-05'),
-            ('AST-0008','Cisco Meraki Access Point',   'Networking Equipment', 'Cisco Systems KH',  'CMRAP-002', 'BA-0008', 450.00,'Available',  'Branch - Siem Reap','2022-08-05','2025-08-05'),
-            ('AST-0009','Executive Desk',              'Furniture',            'mengrhhomg Trading','DESK-001',  'BA-0009', 320.00,'Assigned',   'Head Office',       '2020-01-10','2025-01-10'),
-            ('AST-0010','Ergonomic Office Chair',      'Furniture',            'mengrhhomg Trading','CHAIR-001', 'BA-0010', 180.00,'Available',  'Head Office',       '2021-05-15','2024-05-15'),
-            ('AST-0011','Ergonomic Office Chair',      'Furniture',            'mengrhhomg Trading','CHAIR-002', 'BA-0011', 180.00,'Assigned',   'Finance Department','2021-05-15','2024-05-15'),
-            ('AST-0012','Toyota Camry 2022',           'Vehicles',             'Toyota Cambodia',   'TC2022-001','BA-0012',28000.00,'Assigned',  'Head Office',       '2022-02-28','2027-02-28'),
-            ('AST-0013','Epson EB-X51 Projector',      'Audio Visual',         'TechWorld Cambodia','EBX51-001', 'BA-0013', 520.00,'Available',  'Head Office',       '2022-11-01','2025-11-01'),
-            ('AST-0014','LG 27" Monitor',              'Audio Visual',         'TechWorld Cambodia','LG27-001',  'BA-0014', 280.00,'Assigned',   'Head Office',       '2023-03-10','2026-03-10'),
-            ('AST-0015','LG 27" Monitor',              'Audio Visual',         'TechWorld Cambodia','LG27-002',  'BA-0015', 280.00,'Assigned',   'Finance Department','2023-03-10','2026-03-10'),
+            # ── iPhone 12 ──────────────────────────────────────────────────────────────
+            ('AST-PH-001', 'Apple iPhone 12 (128GB)', 'IP12-SN-0001', 'MB-IP12-0001',  549.00, 'Assigned',          'Head Office',            '2023-06-01', '2025-06-01'),
+            ('AST-PH-002', 'Apple iPhone 12 (128GB)', 'IP12-SN-0002', 'MB-IP12-0002',  549.00, 'Assigned',          'Finance Department',      '2023-06-01', '2025-06-01'),
+            ('AST-PH-003', 'Apple iPhone 12 (256GB)', 'IP12-SN-0003', 'MB-IP12-0003',  599.00, 'Available',         'Main Warehouse',          '2023-06-01', '2025-06-01'),
+            # ── iPhone 13 ──────────────────────────────────────────────────────────────
+            ('AST-PH-004', 'Apple iPhone 13 (128GB)', 'IP13-SN-0001', 'MB-IP13-0001',  599.00, 'Assigned',          'Head Office',            '2023-09-20', '2025-09-20'),
+            ('AST-PH-005', 'Apple iPhone 13 (128GB)', 'IP13-SN-0002', 'MB-IP13-0002',  599.00, 'Assigned',          'HR Department',          '2023-09-20', '2025-09-20'),
+            ('AST-PH-006', 'Apple iPhone 13 (256GB)', 'IP13-SN-0003', 'MB-IP13-0003',  649.00, 'Available',         'IT Storage Room',        '2023-09-20', '2025-09-20'),
+            # ── iPhone 14 ──────────────────────────────────────────────────────────────
+            ('AST-PH-007', 'Apple iPhone 14 (128GB)', 'IP14-SN-0001', 'MB-IP14-0001',  699.00, 'Assigned',          'Head Office',            '2023-12-10', '2025-12-10'),
+            ('AST-PH-008', 'Apple iPhone 14 (128GB)', 'IP14-SN-0002', 'MB-IP14-0002',  699.00, 'Assigned',          'Finance Department',      '2023-12-10', '2025-12-10'),
+            ('AST-PH-009', 'Apple iPhone 14 (256GB)', 'IP14-SN-0003', 'MB-IP14-0003',  749.00, 'Available',         'Main Warehouse',          '2023-12-10', '2025-12-10'),
+            ('AST-PH-010', 'Apple iPhone 14 (256GB)', 'IP14-SN-0004', 'MB-IP14-0004',  749.00, 'Under Maintenance', 'IT Storage Room',        '2023-12-10', '2025-12-10'),
+            # ── iPhone 15 ──────────────────────────────────────────────────────────────
+            ('AST-PH-011', 'Apple iPhone 15 (128GB)', 'IP15-SN-0001', 'MB-IP15-0001',  799.00, 'Assigned',          'Head Office',            '2024-03-15', '2026-03-15'),
+            ('AST-PH-012', 'Apple iPhone 15 (128GB)', 'IP15-SN-0002', 'MB-IP15-0002',  799.00, 'Assigned',          'HR Department',          '2024-03-15', '2026-03-15'),
+            ('AST-PH-013', 'Apple iPhone 15 (256GB)', 'IP15-SN-0003', 'MB-IP15-0003',  859.00, 'Assigned',          'Finance Department',      '2024-03-15', '2026-03-15'),
+            ('AST-PH-014', 'Apple iPhone 15 Pro (256GB)', 'IP15P-SN-0001','MB-IP15P-0001', 999.00, 'Assigned',      'Head Office',            '2024-04-01', '2026-04-01'),
+            ('AST-PH-015', 'Apple iPhone 15 Pro (256GB)', 'IP15P-SN-0002','MB-IP15P-0002', 999.00, 'Available',     'IT Storage Room',        '2024-04-01', '2026-04-01'),
+            # ── iPhone 16 ──────────────────────────────────────────────────────────────
+            ('AST-PH-016', 'Apple iPhone 16 (128GB)', 'IP16-SN-0001', 'MB-IP16-0001',  899.00, 'Assigned',          'Head Office',            '2024-10-01', '2026-10-01'),
+            ('AST-PH-017', 'Apple iPhone 16 (128GB)', 'IP16-SN-0002', 'MB-IP16-0002',  899.00, 'Assigned',          'Finance Department',      '2024-10-01', '2026-10-01'),
+            ('AST-PH-018', 'Apple iPhone 16 (256GB)', 'IP16-SN-0003', 'MB-IP16-0003',  959.00, 'Available',         'Main Warehouse',          '2024-10-01', '2026-10-01'),
+            ('AST-PH-019', 'Apple iPhone 16 Pro (256GB)','IP16P-SN-0001','MB-IP16P-0001',1099.00,'Assigned',         'Head Office',            '2024-10-15', '2026-10-15'),
+            ('AST-PH-020', 'Apple iPhone 16 Pro (256GB)','IP16P-SN-0002','MB-IP16P-0002',1099.00,'Available',        'IT Storage Room',        '2024-10-15', '2026-10-15'),
+            # ── iPhone 17 ──────────────────────────────────────────────────────────────
+            ('AST-PH-021', 'Apple iPhone 17 (256GB)', 'IP17-SN-0001', 'MB-IP17-0001', 1099.00, 'Assigned',          'Head Office',            '2025-04-01', '2027-04-01'),
+            ('AST-PH-022', 'Apple iPhone 17 (256GB)', 'IP17-SN-0002', 'MB-IP17-0002', 1099.00, 'Assigned',          'Finance Department',      '2025-04-01', '2027-04-01'),
+            ('AST-PH-023', 'Apple iPhone 17 (256GB)', 'IP17-SN-0003', 'MB-IP17-0003', 1099.00, 'Available',         'Main Warehouse',          '2025-04-01', '2027-04-01'),
+            ('AST-PH-024', 'Apple iPhone 17 Pro (256GB)','IP17P-SN-0001','MB-IP17P-0001',1299.00,'Assigned',         'Head Office',            '2025-04-15', '2027-04-15'),
+            ('AST-PH-025', 'Apple iPhone 17 Pro (256GB)','IP17P-SN-0002','MB-IP17P-0002',1299.00,'Available',        'IT Storage Room',        '2025-04-15', '2027-04-15'),
+            ('AST-PH-026', 'Apple iPhone 17 Pro Max (512GB)','IP17PM-SN-0001','MB-IP17PM-0001',1499.00,'Assigned',   'Head Office',            '2025-05-01', '2027-05-01'),
+            ('AST-PH-027', 'Apple iPhone 17 Pro Max (512GB)','IP17PM-SN-0002','MB-IP17PM-0002',1499.00,'Available',  'Branch - Siem Reap',     '2025-05-01', '2027-05-01'),
         ]
-        for code, name, cat_name, sup_name, serial, barcode, price, status, loc_name, pur_date, war_date in assets_data:
+
+        from apps.inventory.models import Category, Supplier, Location
+        cat = Category.objects.get(category_name='Mobile Devices', category_type='Asset')
+
+        for code, name, serial, barcode, price, status, loc_name, pur_date, war_date in assets_data:
             if not Asset.objects.filter(asset_code=code).exists():
-                cat = Category.objects.get(category_name=cat_name, category_type='Asset')
+                # pick supplier based on model
+                sup_name = 'iStore Phnom Penh' if 'Pro' in name else 'Apple Cambodia'
                 sup = Supplier.objects.get(supplier_name=sup_name)
                 loc = Location.objects.get(location_name=loc_name)
                 assigned = mgr if status == 'Assigned' else None
@@ -233,37 +251,49 @@ class Command(BaseCommand):
                     warranty_expiry_date=date.fromisoformat(war_date),
                     assigned_to=assigned, is_active=True,
                 )
-                self.stdout.write(f'  ✔ Asset: {name} ({code})')
+                self.stdout.write(f'  ✔ Asset: {name} ({code}) — {serial}')
 
-    # ── Stock Movements ───────────────────────────────────────
+    # ── Stock Movements — iPhone stock IN/OUT ─────────────────
     def _seed_stock_movements(self):
         from apps.inventory.models import InventoryItem
         from apps.accounts.models import User
         from apps.stock.models import StockMovement, LowStockAlert
         from django.utils import timezone
         from datetime import timedelta
+        from decimal import Decimal
 
-        admin = User.objects.filter(role__role_name='Admin').first()
+        admin   = User.objects.filter(role__role_name='Admin').first()
         manager = User.objects.filter(role__role_name='Manager').first()
-        staff = User.objects.filter(role__role_name='Staff').first()
-        users = [admin, manager, staff]
+        staff   = User.objects.filter(role__role_name='Staff').first()
+        users   = [admin, manager, staff]
 
+        # (item_code, movement_type, qty, reason, ref_no, days_ago)
         movements_data = [
-            ('INV-0001', 'Stock IN',   50, 'Purchase',   'PO-2024-001', 10),
-            ('INV-0002', 'Stock IN',   30, 'Purchase',   'PO-2024-002', 20),
-            ('INV-0006', 'Stock IN',    5, 'Purchase',   'PO-2024-003', 15),
-            ('INV-0011', 'Stock IN',   15, 'Purchase',   'PO-2024-004', 25),
-            ('INV-0001', 'Stock OUT',  10, 'Usage',      'REQ-001',     5),
-            ('INV-0002', 'Stock OUT',   5, 'Usage',      'REQ-002',     3),
-            ('INV-0006', 'Stock OUT',   2, 'Usage',      'REQ-003',     7),
-            ('INV-0012', 'Stock OUT',   5, 'Usage',      'REQ-004',     1),
-            ('INV-0013', 'Stock OUT',   3, 'Usage',      'REQ-005',     2),
-            ('INV-0017', 'Stock OUT',   4, 'Usage',      'REQ-006',     4),
-            ('INV-0019', 'Stock OUT',   2, 'Damage',     'DMG-001',     6),
-            ('INV-0020', 'Stock OUT',   1, 'Damage',     'DMG-002',     8),
-            ('INV-0007', 'Adjustment', 25, 'Adjustment', 'ADJ-001',     9),
-            ('INV-0008', 'Purchase',   20, 'Purchase',   'PO-2024-005', 11),
-            ('INV-0009', 'Stock IN',  100, 'Purchase',   'PO-2024-006', 12),
+            # Initial stock IN purchases
+            ('INV-PH-001', 'Stock IN',  10, 'Purchase', 'PO-PH-001', 30),
+            ('INV-PH-002', 'Stock IN',   8, 'Purchase', 'PO-PH-002', 30),
+            ('INV-PH-003', 'Stock IN',  10, 'Purchase', 'PO-PH-003', 28),
+            ('INV-PH-004', 'Stock IN',   8, 'Purchase', 'PO-PH-004', 28),
+            ('INV-PH-005', 'Stock IN',   8, 'Purchase', 'PO-PH-005', 25),
+            ('INV-PH-006', 'Stock IN',   6, 'Purchase', 'PO-PH-006', 25),
+            ('INV-PH-007', 'Stock IN',   8, 'Purchase', 'PO-PH-007', 20),
+            ('INV-PH-008', 'Stock IN',   6, 'Purchase', 'PO-PH-008', 20),
+            ('INV-PH-009', 'Stock IN',   5, 'Purchase', 'PO-PH-009', 18),
+            ('INV-PH-010', 'Stock IN',   6, 'Purchase', 'PO-PH-010', 15),
+            ('INV-PH-011', 'Stock IN',   5, 'Purchase', 'PO-PH-011', 15),
+            ('INV-PH-012', 'Stock IN',   4, 'Purchase', 'PO-PH-012', 12),
+            ('INV-PH-013', 'Stock IN',   5, 'Purchase', 'PO-PH-013', 10),
+            ('INV-PH-014', 'Stock IN',   3, 'Purchase', 'PO-PH-014', 8),
+            ('INV-PH-015', 'Stock IN',   3, 'Purchase', 'PO-PH-015', 5),
+            # Stock OUT — issued to staff
+            ('INV-PH-001', 'Stock OUT',  2, 'Usage', 'REQ-PH-001', 20),
+            ('INV-PH-003', 'Stock OUT',  2, 'Usage', 'REQ-PH-002', 18),
+            ('INV-PH-005', 'Stock OUT',  2, 'Usage', 'REQ-PH-003', 15),
+            ('INV-PH-007', 'Stock OUT',  2, 'Usage', 'REQ-PH-004', 12),
+            ('INV-PH-010', 'Stock OUT',  2, 'Usage', 'REQ-PH-005', 10),
+            ('INV-PH-013', 'Stock OUT',  2, 'Usage', 'REQ-PH-006', 7),
+            # Damaged unit
+            ('INV-PH-006', 'Stock OUT',  1, 'Damage', 'DMG-PH-001', 5),
         ]
 
         for i, (code, mtype, qty, reason, ref, days_ago) in enumerate(movements_data):
@@ -285,27 +315,27 @@ class Command(BaseCommand):
                         reason=reason, qty_after=new_qty,
                     )
                     LowStockAlert.create_if_needed(item)
-                    self.stdout.write(f'  ✔ Movement: {mtype} {qty} x {item.item_name}')
+                    self.stdout.write(f'  ✔ Movement: {mtype} {qty}x {item.item_name}')
             except InventoryItem.DoesNotExist:
-                pass
+                self.stdout.write(self.style.WARNING(f'  ⚠ Item not found: {code}'))
 
     # ── Notifications ─────────────────────────────────────────
     def _seed_notifications(self):
         from apps.accounts.models import User
         from apps.notifications.models import Notification
 
-        admin = User.objects.filter(role__role_name='Admin').first()
+        admin   = User.objects.filter(role__role_name='Admin').first()
         manager = User.objects.filter(role__role_name='Manager').first()
         if not admin:
             return
 
         notifs = [
-            (admin,   'Low Stock Alert',          'Paper Clips (Box) is below minimum quantity (3 remaining, min 5).', 'warning', '/stock/alerts/'),
-            (admin,   'New User Registered',       'Staff user "Virak Mao" has been created successfully.',             'info',    '/accounts/users/'),
-            (admin,   'Asset Maintenance Due',     'HP ProDesk 600 (HPD600-003) is currently under maintenance.',      'warning', '/assets/maintenance/'),
-            (manager, 'Stock Movement Recorded',   'Stock OUT of 5 x Ballpoint Pens recorded by Borey Nhem.',          'info',    '/stock/'),
-            (manager, 'Low Stock Alert',           'Whiteboard Marker Set is below minimum quantity.',                  'warning', '/stock/alerts/'),
-            (manager, 'Disposal Request Pending',  'No disposal requests pending at this time.',                        'success', '/assets/disposals/'),
+            (admin,   'Low Stock Alert',       'Apple iPhone 17 Pro Max is below minimum quantity (3 remaining, min 1).', 'warning', '/stock/alerts/'),
+            (admin,   'New Stock Received',    '10 units of iPhone 12 (128GB) received from Apple Cambodia.',             'info',    '/stock/'),
+            (admin,   'Asset Assigned',        'iPhone 16 Pro (IP16P-SN-0001) assigned to manager.',                     'info',    '/assets/'),
+            (manager, 'Stock Movement',        'Stock OUT of 2x iPhone 15 (128GB) issued to HR Department.',             'info',    '/stock/'),
+            (manager, 'Damaged Unit',          'iPhone 14 (256GB) — IP14-SN-0004 marked Under Maintenance.',             'warning', '/assets/maintenance/'),
+            (manager, 'New iPhone 17 Arrived', '5 units of Apple iPhone 17 (256GB) received and ready for issue.',       'success', '/inventory/items/'),
         ]
         for user, title, msg, ntype, link in notifs:
             if not Notification.objects.filter(user=user, title=title).exists():

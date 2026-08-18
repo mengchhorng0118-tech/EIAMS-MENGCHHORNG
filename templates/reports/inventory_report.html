@@ -3,16 +3,30 @@
 {% block title %}Inventory Report{% endblock %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css">
 <style>
+.report-print-header, .report-print-footer { display: none; }
 @media print {
   .no-print { display: none !important; }
+  .report-print-header, .report-print-footer { display: block !important; }
+  body { font-size: 11px; }
+  .table { font-size: 10px; }
   .card { border: 1px solid #dee2e6 !important; box-shadow: none !important; }
+  @page { margin: 1.5cm; }
 }
 </style>
 {% endblock %}
 
 {% block content %}
 
+<!-- Print Header -->
+<div class="report-print-header mb-3">
+  <strong>Company: EIAMS | Enterprise Inventory &amp; Asset Management System</strong><br>
+  Report: Inventory Stock Report<br>
+  Generated: {{ generated_at|date:"Y-m-d H:i" }} | By: {{ generated_by }} | Total Records: {{ items.count }}
+</div>
+
+<!-- On-Screen Header -->
 <div class="page-header no-print">
   <div>
     <h1><i class="bi bi-box-seam me-2 text-primary"></i>Inventory Report</h1>
@@ -21,8 +35,17 @@
       <li class="breadcrumb-item active">Inventory Report</li>
     </ol></nav>
   </div>
-  <div class="d-flex gap-2 no-print">
-    <button class="btn btn-outline-secondary btn-sm" onclick="window.print()">
+  <div class="d-flex gap-2 no-print flex-wrap">
+    <a href="{% url 'reports:inventory_pdf' %}?{{ request.GET.urlencode }}" class="btn btn-outline-danger btn-sm">
+      <i class="bi bi-filetype-pdf me-1"></i>PDF
+    </a>
+    <a href="{% url 'reports:inventory_excel' %}?{{ request.GET.urlencode }}" class="btn btn-outline-success btn-sm">
+      <i class="bi bi-file-earmark-spreadsheet me-1"></i>Excel
+    </a>
+    <a href="{% url 'reports:inventory_csv' %}?{{ request.GET.urlencode }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-filetype-csv me-1"></i>CSV
+    </a>
+    <button class="btn btn-outline-dark btn-sm" onclick="window.print()">
       <i class="bi bi-printer me-1"></i>Print
     </button>
     <a href="{% url 'reports:index' %}" class="btn btn-outline-primary btn-sm">
@@ -31,96 +54,219 @@
   </div>
 </div>
 
-<!-- Report Meta -->
-<div class="d-flex align-items-center justify-content-between mb-3">
-  <div class="text-muted small"><i class="bi bi-clock me-1"></i>Generated: {{ generated_at|date:"N j, Y, P" }}</div>
-  <div>
-    <span class="badge bg-primary-subtle text-primary border">Total Items: {{ items.count }}</span>
-    <span class="badge bg-danger-subtle text-danger border ms-1">Low Stock: {{ low_stock.count }}</span>
-    <span class="badge bg-success-subtle text-success border ms-1">Total Value: ${{ total_value|floatformat:2|intcomma }}</span>
+<!-- Summary Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="stat-icon blue"><i class="bi bi-box-seam"></i></div>
+        <div><div class="text-muted small">Total Items</div><div class="fs-5 fw-bold">{{ items.count|intcomma }}</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="stat-icon red"><i class="bi bi-exclamation-triangle"></i></div>
+        <div><div class="text-muted small">Low Stock</div><div class="fs-5 fw-bold text-danger">{{ low_stock.count|intcomma }}</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="stat-icon green"><i class="bi bi-currency-dollar"></i></div>
+        <div><div class="text-muted small">Total Value</div><div class="fs-5 fw-bold">${{ total_value|floatformat:0|intcomma }}</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="stat-icon purple"><i class="bi bi-truck"></i></div>
+        <div><div class="text-muted small">Active Suppliers</div><div class="fs-5 fw-bold">{{ active_suppliers }}</div></div>
+      </div>
+    </div>
   </div>
 </div>
 
-<!-- Filter Form -->
+<!-- Charts Row -->
+<div class="row g-3 mb-4 no-print">
+  <div class="col-lg-5">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-transparent border-0 pb-0">
+        <h6 class="fw-semibold mb-0"><i class="bi bi-pie-chart me-2"></i>Inventory Distribution by Category</h6>
+      </div>
+      <div class="card-body"><canvas id="catDonut" style="height:220px;"></canvas></div>
+    </div>
+  </div>
+  <div class="col-lg-7">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-transparent border-0 pb-0">
+        <h6 class="fw-semibold mb-0"><i class="bi bi-bar-chart me-2"></i>Top 10 Items by Stock Value</h6>
+      </div>
+      <div class="card-body"><canvas id="top10Bar" style="height:220px;"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- Advanced Filter Bar -->
 <div class="card mb-3 no-print">
-  <div class="card-body py-2">
-    <form method="get" class="row g-2 align-items-end">
-      <div class="col-md-4">
-        <label class="form-label mb-1 small fw-semibold">Filter by Category</label>
-        <select name="category" class="form-select form-select-sm">
-          <option value="">All Categories</option>
-          {% for cat in categories %}
-          <option value="{{ cat.id }}" {% if cat_filter == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.category_name }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="col-auto">
-        <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-funnel me-1"></i>Filter</button>
-        <a href="{% url 'reports:inventory' %}" class="btn btn-outline-secondary btn-sm ms-1">Clear</a>
-      </div>
-    </form>
+  <div class="card-header d-flex align-items-center justify-content-between py-2">
+    <h6 class="mb-0"><i class="bi bi-funnel me-2"></i>Filter</h6>
+    <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse">
+      <i class="bi bi-chevron-down"></i>
+    </button>
+  </div>
+  <div class="collapse show" id="filterCollapse">
+    <div class="card-body py-2">
+      <form method="get" class="row g-2 align-items-end">
+        <div class="col-md-3">
+          <label class="form-label mb-1 small fw-semibold">Search</label>
+          <input type="text" name="search" value="{{ search_filter }}" class="form-control form-control-sm" placeholder="Name or code…">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label mb-1 small fw-semibold">Category</label>
+          <select name="category" class="form-select form-select-sm">
+            <option value="">All Categories</option>
+            {% for cat in categories %}
+            <option value="{{ cat.id }}" {% if cat_filter == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.category_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label mb-1 small fw-semibold">Supplier</label>
+          <select name="supplier" class="form-select form-select-sm">
+            <option value="">All Suppliers</option>
+            {% for sup in suppliers %}
+            <option value="{{ sup.id }}" {% if sup_filter == sup.id|stringformat:"s" %}selected{% endif %}>{{ sup.supplier_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label mb-1 small fw-semibold">Status</label>
+          <select name="status" class="form-select form-select-sm">
+            <option value="">All</option>
+            <option value="Active"   {% if status_filter == 'Active' %}selected{% endif %}>Active</option>
+            <option value="Inactive" {% if status_filter == 'Inactive' %}selected{% endif %}>Inactive</option>
+          </select>
+        </div>
+        <div class="col-auto">
+          <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+          <a href="{% url 'reports:inventory' %}" class="btn btn-outline-secondary btn-sm ms-1">Clear</a>
+        </div>
+      </form>
+    </div>
   </div>
 </div>
 
 <!-- Data Table -->
-<div class="card">
-  <div class="card-header"><h6 class="mb-0">Inventory Stock Levels</h6></div>
+<div class="card border-0 shadow-sm">
+  <div class="card-header d-flex align-items-center justify-content-between">
+    <h6 class="mb-0">Inventory Stock Levels</h6>
+    <span class="badge bg-secondary">{{ items.count }} records</span>
+  </div>
   <div class="card-body p-0">
     <div class="table-responsive">
-      <table class="table table-hover mb-0">
-        <thead>
+      <table id="inventoryTable" class="table table-hover table-bordered mb-0" style="width:100%">
+        <thead class="table-light">
           <tr>
-            <th>#</th>
-            <th>Item Code</th>
-            <th>Item Name</th>
-            <th>Category</th>
-            <th>Supplier</th>
-            <th>Unit</th>
-            <th class="text-end">Min Qty</th>
-            <th class="text-end">Current Qty</th>
-            <th class="text-end">Unit Price</th>
-            <th class="text-end">Total Value</th>
-            <th>Status</th>
+            <th>#</th><th>Item Code</th><th>Item Name</th><th>Category</th>
+            <th>Supplier</th><th>Unit</th><th class="text-end">Min Qty</th>
+            <th class="text-end">Current Qty</th><th class="text-end">Unit Price</th>
+            <th class="text-end">Total Value</th><th>Status</th>
           </tr>
         </thead>
         <tbody>
           {% for item in items %}
-          <tr {% if item.is_low_stock %}class="table-danger"{% endif %}>
-            <td class="text-muted" style="font-size:.8rem;">{{ forloop.counter }}</td>
+          <tr {% if item.is_low_stock %}class="table-warning"{% endif %}>
+            <td class="text-muted small">{{ forloop.counter }}</td>
             <td><code>{{ item.item_code }}</code></td>
             <td class="fw-semibold">{{ item.item_name }}</td>
             <td>{{ item.category.category_name }}</td>
             <td>{{ item.supplier.supplier_name|default:"—" }}</td>
             <td>{{ item.unit }}</td>
             <td class="text-end">{{ item.min_qty }}</td>
-            <td class="text-end fw-bold">
+            <td class="text-end fw-bold {% if item.is_low_stock %}text-danger{% endif %}">
               {{ item.current_qty }}
-              {% if item.is_low_stock %}<i class="bi bi-exclamation-triangle-fill text-danger ms-1"></i>{% endif %}
+              {% if item.is_low_stock %}<i class="bi bi-exclamation-triangle-fill ms-1"></i>{% endif %}
             </td>
             <td class="text-end">${{ item.purchase_price|floatformat:2 }}</td>
             <td class="text-end">${{ item.get_total_value|floatformat:2|intcomma }}</td>
             <td>
-              {% if item.is_low_stock %}
-                <span class="badge bg-danger">Low Stock</span>
-              {% else %}
-                <span class="badge bg-success">OK</span>
-              {% endif %}
+              {% if item.is_low_stock %}<span class="badge bg-danger">Low Stock</span>
+              {% elif item.status == 'Active' %}<span class="badge bg-success">Active</span>
+              {% else %}<span class="badge bg-secondary">Inactive</span>{% endif %}
             </td>
           </tr>
           {% empty %}
-          <tr><td colspan="11" class="text-center text-muted py-4"><i class="bi bi-inbox d-block fs-3 mb-2"></i>No inventory items found.</td></tr>
+          <tr><td colspan="11" class="text-center text-muted py-4"><i class="bi bi-inbox d-block fs-3 mb-2"></i>No items found.</td></tr>
           {% endfor %}
         </tbody>
         <tfoot class="table-light">
-          <tr>
-            <td colspan="9" class="fw-bold text-end">Grand Total Value:</td>
-            <td class="fw-bold text-end">${{ total_value|floatformat:2|intcomma }}</td>
-            <td></td>
-          </tr>
+          <tr><td colspan="9" class="fw-bold text-end">Grand Total Value:</td>
+            <td class="fw-bold text-end">${{ total_value|floatformat:2|intcomma }}</td><td></td></tr>
         </tfoot>
       </table>
     </div>
   </div>
 </div>
 
+<!-- Print Footer -->
+<div class="report-print-footer mt-3">
+  EIAMS — Confidential | Total: {{ items.count }} records
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
+<script>
+$(document).ready(function() {
+  var $tbody = $('#inventoryTable tbody');
+  if ($tbody.find('tr td[colspan]').length === 0 && $tbody.find('tr').length > 0) {
+    $('#inventoryTable').DataTable({
+      pageLength: 25,
+      order: [[2, 'asc']],
+      autoWidth: false,
+      language: { search: 'Quick Search:' },
+      columnDefs: [{ orderable: false, targets: [0, 10] }],
+    });
+  }
+});
+
+// Category Doughnut
+const catCtx = document.getElementById('catDonut');
+if (catCtx) {
+  new Chart(catCtx, {
+    type: 'doughnut',
+    data: {
+      labels: {{ cat_labels|safe }},
+      datasets: [{ data: {{ cat_values|safe }},
+        backgroundColor: ['#3b82f6','#10b981','#8b5cf6','#f59e0b','#ef4444','#06b6d4','#84cc16','#f97316'],
+        borderWidth: 2 }],
+    },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'right', labels: { font: { size: 10 }, boxWidth: 12 } } } },
+  });
+}
+
+// Top 10 Bar
+const barCtx = document.getElementById('top10Bar');
+if (barCtx) {
+  new Chart(barCtx, {
+    type: 'bar',
+    data: {
+      labels: {{ bar_labels|safe }},
+      datasets: [{ label: 'Stock Value ($)', data: {{ bar_values|safe }},
+        backgroundColor: 'rgba(37,99,235,.75)', borderRadius: 4 }],
+    },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, ticks: { font: { size: 9 } } },
+                x: { ticks: { font: { size: 9 }, maxRotation: 30 } } } },
+  });
+}
+</script>
 {% endblock %}

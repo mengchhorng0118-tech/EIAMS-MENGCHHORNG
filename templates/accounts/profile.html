@@ -132,7 +132,7 @@
         {% else %}
           <div class="avatar-initials" id="avatarInitials">{{ user.full_name|first|upper }}</div>
         {% endif %}
-        <label for="avatarFileInput" class="avatar-upload-btn" title="Change photo">
+        <label for="profilePicInput" class="avatar-upload-btn" title="Change photo">
           <i class="bi bi-camera-fill"></i>
         </label>
       </div>
@@ -217,9 +217,7 @@
             {% csrf_token %}
             <input type="hidden" name="form_type" value="profile">
 
-            <!-- Hidden file input wired to avatar camera btn -->
-            <input type="file" id="avatarFileInput" name="profile_pic"
-                   accept="image/*" class="d-none">
+            <!-- Hidden file input removed — use profilePicInput below -->
 
             <div class="row g-3">
               <div class="col-md-6">
@@ -426,12 +424,10 @@ function previewAvatar(input) {
   reader.readAsDataURL(input.files[0]);
 }
 
-// Wire camera button → hidden file input
-const avatarCameraBtn = document.getElementById('avatarFileInput');
+// Wire camera button → visible file input (profilePicInput)
 const profilePicInput = document.getElementById('profilePicInput');
-if (avatarCameraBtn) {
-  avatarCameraBtn.addEventListener('change', function() {
-    // Sync selection to visible input for form submission
+if (profilePicInput) {
+  profilePicInput.addEventListener('change', function() {
     previewAvatar(this);
   });
 }

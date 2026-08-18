@@ -3,10 +3,16 @@
 {% block title %}Low Stock Report{% endblock %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css">
 <style>
+.report-print-header, .report-print-footer { display: none; }
 @media print {
   .no-print { display: none !important; }
+  .report-print-header, .report-print-footer { display: block !important; }
+  body { font-size: 11px; }
+  .table { font-size: 10px; }
   .card { border: 1px solid #dee2e6 !important; box-shadow: none !important; }
+  @page { margin: 1.5cm; }
 }
 .stock-critical { background: #fef2f2 !important; }
 .stock-warning  { background: #fff7ed !important; }
@@ -15,6 +21,14 @@
 
 {% block content %}
 
+<!-- Print Header -->
+<div class="report-print-header mb-3">
+  <strong>Company: EIAMS | Enterprise Inventory &amp; Asset Management System</strong><br>
+  Report: Low Stock Report<br>
+  Generated: {{ generated_at|date:"Y-m-d H:i" }} | By: {{ generated_by }} | Total Records: {{ items.count }}
+</div>
+
+<!-- On-Screen Header -->
 <div class="page-header no-print">
   <div>
     <h1><i class="bi bi-exclamation-triangle me-2 text-danger"></i>Low Stock Report</h1>
@@ -23,8 +37,17 @@
       <li class="breadcrumb-item active">Low Stock Report</li>
     </ol></nav>
   </div>
-  <div class="d-flex gap-2 no-print">
-    <button class="btn btn-outline-secondary btn-sm" onclick="window.print()">
+  <div class="d-flex gap-2 no-print flex-wrap">
+    <a href="{% url 'reports:low_stock_pdf' %}?{{ request.GET.urlencode }}" class="btn btn-outline-danger btn-sm">
+      <i class="bi bi-filetype-pdf me-1"></i>PDF
+    </a>
+    <a href="{% url 'reports:low_stock_excel' %}?{{ request.GET.urlencode }}" class="btn btn-outline-success btn-sm">
+      <i class="bi bi-file-earmark-spreadsheet me-1"></i>Excel
+    </a>
+    <a href="{% url 'reports:low_stock_csv' %}?{{ request.GET.urlencode }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-filetype-csv me-1"></i>CSV
+    </a>
+    <button class="btn btn-outline-dark btn-sm" onclick="window.print()">
       <i class="bi bi-printer me-1"></i>Print
     </button>
     <a href="{% url 'reports:index' %}" class="btn btn-outline-primary btn-sm">
@@ -33,54 +56,119 @@
   </div>
 </div>
 
-<!-- Alert Banner -->
 {% if items %}
-<div class="alert alert-danger d-flex align-items-center gap-2 mb-3" role="alert">
+<div class="alert alert-danger d-flex align-items-center gap-2 mb-3 no-print" role="alert">
   <i class="bi bi-exclamation-triangle-fill fs-5"></i>
-  <div>
-    <strong>{{ items.count }} item{{ items.count|pluralize }}</strong> currently at or below minimum stock threshold.
-    Immediate restocking action is recommended.
-  </div>
+  <div><strong>{{ items.count }} item{{ items.count|pluralize }}</strong> currently at or below minimum stock threshold. Immediate restocking is recommended.</div>
 </div>
 {% endif %}
 
-<!-- Report Meta -->
-<div class="d-flex align-items-center justify-content-between mb-3">
-  <div class="text-muted small"><i class="bi bi-clock me-1"></i>Generated: {{ generated_at|date:"N j, Y, P" }}</div>
-  <span class="badge bg-danger px-3 py-2">{{ items.count }} Low Stock Item{{ items.count|pluralize }}</span>
+<!-- Summary Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-4">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="stat-icon orange"><i class="bi bi-exclamation-triangle"></i></div>
+        <div><div class="text-muted small">Total Low Stock Items</div><div class="fs-5 fw-bold text-danger">{{ items.count|intcomma }}</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-4">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="stat-icon red"><i class="bi bi-x-circle"></i></div>
+        <div><div class="text-muted small">Out of Stock</div><div class="fs-5 fw-bold text-danger">{{ out_of_stock|intcomma }}</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-xl-4">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="stat-icon green"><i class="bi bi-currency-dollar"></i></div>
+        <div><div class="text-muted small">Total Restock Value</div><div class="fs-5 fw-bold">${{ restock_value|floatformat:0|intcomma }}</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row g-3 mb-4 no-print">
+  <div class="col-lg-7">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-transparent border-0 pb-0">
+        <h6 class="fw-semibold mb-0"><i class="bi bi-bar-chart-horizontal me-2"></i>Items by Current Stock Level (Top 15)</h6>
+      </div>
+      <div class="card-body"><canvas id="stockLevelBar" style="height:250px;"></canvas></div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-transparent border-0 pb-0">
+        <h6 class="fw-semibold mb-0"><i class="bi bi-pie-chart me-2"></i>Low Stock by Category</h6>
+      </div>
+      <div class="card-body d-flex align-items-center justify-content-center">
+        <canvas id="catDonut" style="height:250px;"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="card mb-3 no-print">
+  <div class="card-body py-2">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-md-4">
+        <label class="form-label mb-1 small fw-semibold">Search</label>
+        <input type="text" name="search" value="{{ search_filter }}" class="form-control form-control-sm" placeholder="Item name or code…">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label mb-1 small fw-semibold">Category</label>
+        <select name="category" class="form-select form-select-sm">
+          <option value="">All Categories</option>
+          {% for cat in categories %}
+          <option value="{{ cat.id }}" {% if cat_filter == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.category_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label mb-1 small fw-semibold">Supplier</label>
+        <select name="supplier" class="form-select form-select-sm">
+          <option value="">All Suppliers</option>
+          {% for sup in suppliers %}
+          <option value="{{ sup.id }}" {% if sup_filter == sup.id|stringformat:"s" %}selected{% endif %}>{{ sup.supplier_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-auto">
+        <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-funnel me-1"></i>Filter</button>
+        <a href="{% url 'reports:low_stock' %}" class="btn btn-outline-secondary btn-sm ms-1">Clear</a>
+      </div>
+    </form>
+  </div>
 </div>
 
 <!-- Data Table -->
-<div class="card">
+<div class="card border-0 shadow-sm">
   <div class="card-header d-flex align-items-center justify-content-between">
     <h6 class="mb-0"><i class="bi bi-list-ul me-2"></i>Items Below Minimum Stock</h6>
-    <a href="{% url 'stock:movement_list' %}" class="btn btn-sm btn-outline-success no-print">
-      <i class="bi bi-plus-lg me-1"></i>Add Stock
-    </a>
+    <span class="badge bg-danger">{{ items.count }} items</span>
   </div>
   <div class="card-body p-0">
     <div class="table-responsive">
-      <table class="table table-hover mb-0">
-        <thead>
+      <table id="lowStockTable" class="table table-hover table-bordered mb-0" style="width:100%">
+        <thead class="table-light">
           <tr>
-            <th>#</th>
-            <th>Item Code</th>
-            <th>Item Name</th>
-            <th>Category</th>
-            <th>Supplier</th>
-            <th>Unit</th>
-            <th class="text-end">Min Qty</th>
-            <th class="text-end">Current Qty</th>
-            <th class="text-end">Deficit</th>
-            <th class="text-end">Unit Price</th>
-            <th>Urgency</th>
+            <th>#</th><th>Item Code</th><th>Item Name</th><th>Category</th>
+            <th>Supplier</th><th>Unit</th><th class="text-end">Min Qty</th>
+            <th class="text-end">Current Qty</th><th class="text-end">Deficit</th>
+            <th class="text-end">Unit Price</th><th>Urgency</th>
           </tr>
         </thead>
         <tbody>
-          {% for item in items %}
-          {% with deficit=item.min_qty|add:"-"|add:item.current_qty|stringformat:"s" %}
+          {% for row in deficit_data %}
+          {% with item=row.item deficit=row.deficit %}
           <tr class="{% if item.current_qty == 0 %}stock-critical{% else %}stock-warning{% endif %}">
-            <td class="text-muted" style="font-size:.8rem;">{{ forloop.counter }}</td>
+            <td class="text-muted small">{{ forloop.counter }}</td>
             <td><code>{{ item.item_code }}</code></td>
             <td class="fw-semibold">{{ item.item_name }}</td>
             <td>{{ item.category.category_name }}</td>
@@ -88,32 +176,24 @@
             <td>{{ item.unit }}</td>
             <td class="text-end fw-semibold">{{ item.min_qty }}</td>
             <td class="text-end fw-bold text-danger">{{ item.current_qty }}</td>
-            <td class="text-end fw-bold">
-              {% with d=item.min_qty|add:item.current_qty %}
-                {% comment %}compute deficit = min_qty - current_qty{% endcomment %}
-              {% endwith %}
-              —
-            </td>
+            <td class="text-end fw-bold text-danger">{{ deficit }}</td>
             <td class="text-end">${{ item.purchase_price|floatformat:2 }}</td>
             <td>
               {% if item.current_qty == 0 %}
                 <span class="badge bg-danger">Out of Stock</span>
-              {% elif item.current_qty <= item.min_qty|divisibleby:2 %}
+              {% elif deficit > item.min_qty|add:0|floatformat:0 %}
                 <span class="badge bg-warning text-dark">Critical</span>
               {% else %}
-                <span class="badge bg-orange text-white" style="background:#f97316;">Low</span>
+                <span class="badge text-white" style="background:#f97316;">Low</span>
               {% endif %}
             </td>
           </tr>
           {% endwith %}
           {% empty %}
-          <tr>
-            <td colspan="11" class="text-center text-success py-4">
-              <i class="bi bi-check-circle-fill d-block fs-3 mb-2"></i>
-              <strong>All stock levels are healthy!</strong>
-              <div class="text-muted small mt-1">No items are currently below minimum threshold.</div>
-            </td>
-          </tr>
+          <tr><td colspan="11" class="text-center text-success py-4">
+            <i class="bi bi-check-circle-fill d-block fs-3 mb-2"></i>
+            <strong>All stock levels are healthy!</strong>
+          </td></tr>
           {% endfor %}
         </tbody>
       </table>
@@ -121,4 +201,66 @@
   </div>
 </div>
 
+<!-- Print Footer -->
+<div class="report-print-footer mt-3">
+  EIAMS — Confidential | Total: {{ items.count }} records
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
+<script>
+$(document).ready(function() {
+  // Guard: only init DataTables when table has real data rows (no colspan empty row)
+  var $tbody = $('#lowStockTable tbody');
+  if ($tbody.find('tr td[colspan]').length === 0 && $tbody.find('tr').length > 0) {
+    $('#lowStockTable').DataTable({
+      pageLength: 25,
+      order: [[7, 'asc']],
+      autoWidth: false,
+      language: { search: 'Quick Search:' },
+      columnDefs: [{ orderable: false, targets: [0] }],
+    });
+  }
+});
+});
+
+// Stock Level Horizontal Bar
+const barCtx = document.getElementById('stockLevelBar');
+if (barCtx) {
+  const barLabels = {{ bar_labels|safe }};
+  const barValues = {{ bar_values|safe }};
+  const barColors = barValues.map(v => v === 0 ? '#ef4444' : '#f97316');
+  new Chart(barCtx, {
+    type: 'bar',
+    data: {
+      labels: barLabels,
+      datasets: [{ label: 'Current Qty', data: barValues,
+        backgroundColor: barColors, borderRadius: 4 }],
+    },
+    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { x: { beginAtZero: true, ticks: { font: { size: 9 } } },
+                y: { ticks: { font: { size: 9 } } } } },
+  });
+}
+
+// Category Doughnut
+const donutCtx = document.getElementById('catDonut');
+if (donutCtx) {
+  new Chart(donutCtx, {
+    type: 'doughnut',
+    data: {
+      labels: {{ donut_labels|safe }},
+      datasets: [{ data: {{ donut_values|safe }},
+        backgroundColor: ['#ef4444','#f97316','#f59e0b','#3b82f6','#8b5cf6','#10b981','#06b6d4'],
+        borderWidth: 2 }],
+    },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'right', labels: { font: { size: 10 }, boxWidth: 12 } } } },
+  });
+}
+</script>
 {% endblock %}

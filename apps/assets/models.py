@@ -76,6 +76,15 @@ class Asset(models.Model):
     asset_name           = models.CharField(max_length=150, verbose_name='Asset Name')
     serial_number        = models.CharField(max_length=100, unique=True, null=True, blank=True)
     barcode              = models.CharField(max_length=100, unique=True, null=True, blank=True)
+    image                = models.ImageField(
+        upload_to='assets/images/', blank=True, null=True,
+        verbose_name='Asset Image'
+    )
+    image_url            = models.URLField(
+        max_length=500, blank=True, null=True,
+        verbose_name='Asset Image URL',
+        help_text='External product image URL'
+    )
     purchase_date        = models.DateField(null=True, blank=True)
     purchase_price       = models.DecimalField(
         max_digits=10, decimal_places=2, default=Decimal('0.00'),
@@ -101,6 +110,15 @@ class Asset(models.Model):
         if self.warranty_expiry_date:
             return 0 <= (self.warranty_expiry_date - timezone.now().date()).days <= 30
         return False
+
+    def get_image(self):
+        """Return local image if uploaded, else image_url, else None."""
+        if self.image:
+            from django.conf import settings
+            return f"{settings.MEDIA_URL}{self.image}"
+        if self.image_url:
+            return self.image_url
+        return None
 
     def can_be_transferred(self):
         """Returns (bool, reason_str). False if the asset is blocked."""

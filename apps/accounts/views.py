@@ -27,7 +27,8 @@ from django.conf import settings
 from .models import User, Role
 from .forms import (
     LoginForm, UserCreateForm, UserUpdateForm,
-    ProfileUpdateForm, CustomPasswordChangeForm
+    ProfileUpdateForm, CustomPasswordChangeForm,
+    AdminPasswordChangeForm,
 )
 from .decorators import admin_or_above_required, super_admin_required
 
@@ -278,10 +279,10 @@ def user_update(request, pk):
 @admin_or_above_required
 def user_delete(request, pk):
     """
-    Soft-delete (deactivate) a user account.
-
-    We never hard-delete users to preserve audit trail integrity.
-    Instead, the account status is set to Inactive.
+    Delete or deactivate a user account.
+    - Super Admin can delete any user (except themselves)
+    - Admin can delete/deactivate Staff and Manager (not Super Admin or other Admins)
+    - Never hard-deletes if the user has activity history (soft-delete instead)
     """
     user_obj = get_object_or_404(User, pk=pk)
 
@@ -290,22 +291,50 @@ def user_delete(request, pk):
         messages.error(request, 'You cannot deactivate your own account.')
         return redirect('accounts:user_list')
 
-    # Prevent non-Super Admin from deleting Super Admin
-    if user_obj.is_super_admin() and not request.user.is_super_admin():
-        messages.error(request, 'You do not have permission to deactivate a Super Admin.')
-        return redirect('accounts:user_list')
+    # Admin cannot deactivate Super Admin or other Admins
+    if not request.user.is_super_admin():
+        if user_obj.is_super_admin():
+            messages.error(request, 'You do not have permission to deactivate a Super Admin.')
+            return redirect('accounts:user_list')
+        if user_obj.role and user_obj.role.role_name == 'Admin':
+            messages.error(request, 'You do not have permission to deactivate another Admin. Only Super Admin can do this.')
+            return redirect('accounts:user_list')
 
     if request.method == 'POST':
-        user_obj.deactivate()
-        messages.success(
-            request,
-            f'User "{user_obj.full_name}" has been deactivated successfully.'
-        )
+        action = request.POST.get('action', 'deactivate')
+
+        if action == 'hard_delete':
+            # Hard delete only if no related records
+            has_history = (
+                user_obj.stock_movements.exists() or
+                user_obj.assigned_assets.exists() or
+                user_obj.transfers_requested.exists() or
+                user_obj.audits_conducted.exists()
+            )
+            if has_history:
+                # Fall back to deactivate
+                user_obj.deactivate()
+                messages.warning(
+                    request,
+                    f'User "{user_obj.full_name}" has activity history and cannot be permanently deleted. '
+                    'Account has been deactivated instead.'
+                )
+            else:
+                name = user_obj.full_name
+                user_obj.delete()
+                messages.success(request, f'User "{name}" has been permanently deleted.')
+        else:
+            user_obj.deactivate()
+            messages.success(
+                request,
+                f'User "{user_obj.full_name}" has been deactivated successfully.'
+            )
         return redirect('accounts:user_list')
 
     return render(request, 'accounts/user_confirm_delete.html', {
         'user_obj':   user_obj,
-        'page_title': 'Deactivate User',
+        'page_title': 'Deactivate / Delete User',
+        'can_hard_delete': request.user.is_super_admin(),
     })
 
 
@@ -316,6 +345,63 @@ def user_detail(request, pk):
     return render(request, 'accounts/user_detail.html', {
         'user_obj':   user_obj,
         'page_title': f'User Profile: {user_obj.full_name}',
+    })
+
+
+@login_required
+@admin_or_above_required
+def admin_change_user_password(request, pk):
+    """
+    Allow Admin / Super Admin to set a new password for any user.
+
+    Access rules:
+    - Admin cannot change a Super Admin's password.
+    - Admin cannot change another Admin's password (only Super Admin can).
+    - No one can change their own password here (use profile page instead).
+
+    GET:  Show the password-change form.
+    POST: Validate and save the new password.
+    """
+    user_obj = get_object_or_404(User, pk=pk)
+
+    # Redirect self-password changes to the profile page
+    if user_obj == request.user:
+        messages.info(request, 'Use your profile page to change your own password.')
+        return redirect('accounts:profile')
+
+    # Admin cannot change Super Admin's password
+    if user_obj.is_super_admin() and not request.user.is_super_admin():
+        messages.error(request, 'You do not have permission to change a Super Admin\'s password.')
+        return redirect('accounts:user_list')
+
+    # Admin cannot change another Admin's password
+    if (
+        not request.user.is_super_admin()
+        and user_obj.role
+        and user_obj.role.role_name == 'Admin'
+    ):
+        messages.error(request, 'Only a Super Admin can change another Admin\'s password.')
+        return redirect('accounts:user_list')
+
+    if request.method == 'POST':
+        form = AdminPasswordChangeForm(request.POST)
+        if form.is_valid():
+            user_obj.set_password(form.cleaned_data['new_password1'])
+            user_obj.save()
+            messages.success(
+                request,
+                f'Password for "{user_obj.full_name}" has been changed successfully.'
+            )
+            return redirect('accounts:user_list')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = AdminPasswordChangeForm()
+
+    return render(request, 'accounts/user_change_password.html', {
+        'form':       form,
+        'user_obj':   user_obj,
+        'page_title': f'Change Password — {user_obj.full_name}',
     })
 
 

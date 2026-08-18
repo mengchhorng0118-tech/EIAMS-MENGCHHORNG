@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 580" width="300" height="580">
+  <defs>
+    <linearGradient id="body" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"   stop-color="#1C1C1E" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#0a0a0a" stop-opacity="1"/>
+    </linearGradient>
+    <linearGradient id="screen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#1a1a2e"/>
+      <stop offset="100%" stop-color="#16213e"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%"   stop-color="#ffffff" stop-opacity="0.15"/>
+      <stop offset="50%"  stop-color="#ffffff" stop-opacity="0.03"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+
+  <!-- Phone body -->
+  <rect x="20" y="10" width="260" height="560" rx="40" ry="40"
+        fill="url(#body)" filter="url(#shadow)"/>
+
+  <!-- Side shine -->
+  <rect x="20" y="10" width="260" height="560" rx="40" ry="40"
+        fill="url(#shine)"/>
+
+  <!-- Screen bezel -->
+  <rect x="30" y="55" width="240" height="470" rx="20" ry="20"
+        fill="#0a0a0c"/>
+
+  <!-- Screen -->
+  <rect x="34" y="59" width="232" height="462" rx="18" ry="18"
+        fill="url(#screen)"/>
+
+  <!-- Dynamic Island (iPhone 14 Pro+) or notch -->
+  <rect x="108" y="68" width="84" height="28" rx="14" ry="14"
+        fill="#0a0a0a"/>
+
+  <!-- Camera system (top-right cluster) -->
+  <g transform="translate(195,95)">
+    <!-- Camera bump background -->
+    <rect x="-38" y="-38" width="76" height="76" rx="18"
+          fill="#111" stroke="#2a2a2a" stroke-width="1.5"/>
+    <!-- Main lens -->
+    <circle cx="0" cy="-10" r="18" fill="#0a0a0a" stroke="#333" stroke-width="1"/>
+    <circle cx="0" cy="-10" r="13" fill="#1a1a1a"/>
+    <circle cx="0" cy="-10" r="7"  fill="#0d0d0d"/>
+    <circle cx="-4" cy="-14" r="2" fill="#444" opacity="0.8"/>
+    <!-- Ultra-wide lens -->
+    <circle cx="-18" cy="14" r="13" fill="#0a0a0a" stroke="#333" stroke-width="1"/>
+    <circle cx="-18" cy="14" r="8"  fill="#1a1a1a"/>
+    <circle cx="-18" cy="14" r="4"  fill="#0d0d0d"/>
+    <!-- Tele lens -->
+    <circle cx="18"  cy="14" r="13" fill="#0a0a0a" stroke="#333" stroke-width="1"/>
+    <circle cx="18"  cy="14" r="8"  fill="#1a1a1a"/>
+    <circle cx="18"  cy="14" r="4"  fill="#0d0d0d"/>
+    <!-- Flash -->
+    <circle cx="18" cy="-24" r="6" fill="#554422" stroke="#665533" stroke-width="1"/>
+    <circle cx="18" cy="-24" r="3" fill="#ffe08a" opacity="0.6"/>
+  </g>
+
+  <!-- Screen content — Apple logo -->
+  <text x="150" y="280" font-family="Arial,Helvetica,sans-serif"
+        font-size="52" text-anchor="middle" fill="#ffffff" opacity="0.18"></text>
+
+  <!-- Model name on screen -->
+  <text x="150" y="340" font-family="-apple-system,BlinkMacSystemFont,Arial,sans-serif"
+        font-size="22" font-weight="600" text-anchor="middle"
+        fill="#ffffff" opacity="0.85">iPhone 15</text>
+  <text x="150" y="368" font-family="-apple-system,BlinkMacSystemFont,Arial,sans-serif"
+        font-size="15" font-weight="400" text-anchor="middle"
+        fill="#8e8e93" opacity="0.9">128GB / 256GB</text>
+
+  <!-- Home indicator bar -->
+  <rect x="105" y="500" width="90" height="5" rx="2.5"
+        fill="#ffffff" opacity="0.25"/>
+
+  <!-- Side buttons -->
+  <rect x="15" y="120" width="5" height="50" rx="2.5" fill="#2a2a2a"/>
+  <rect x="15" y="185" width="5" height="70" rx="2.5" fill="#2a2a2a"/>
+  <rect x="280" y="140" width="5" height="80" rx="2.5" fill="#2a2a2a"/>
+</svg>

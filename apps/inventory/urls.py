@@ -31,6 +31,7 @@ urlpatterns = [
     path('items/<int:pk>/',              views.item_detail,      name='item_detail'),
     path('items/<int:pk>/update/',       views.item_update,      name='item_update'),
     path('items/<int:pk>/delete/',       views.item_delete,      name='item_delete'),
+    path('items/<int:pk>/stock-in/',     views.quick_stock_in,   name='quick_stock_in'),
 
     # ── Barcode / QR Code ─────────────────────────────────────────────────
     path('barcode/',                     views.barcode_lookup,       name='barcode_lookup'),

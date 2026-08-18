@@ -3,16 +3,30 @@
 {% block title %}Asset Report{% endblock %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css">
 <style>
+.report-print-header, .report-print-footer { display: none; }
 @media print {
   .no-print { display: none !important; }
+  .report-print-header, .report-print-footer { display: block !important; }
+  body { font-size: 11px; }
+  .table { font-size: 10px; }
   .card { border: 1px solid #dee2e6 !important; box-shadow: none !important; }
+  @page { margin: 1.5cm; }
 }
 </style>
 {% endblock %}
 
 {% block content %}
 
+<!-- Print Header -->
+<div class="report-print-header mb-3">
+  <strong>Company: EIAMS | Enterprise Inventory &amp; Asset Management System</strong><br>
+  Report: Asset Status Report<br>
+  Generated: {{ generated_at|date:"Y-m-d H:i" }} | By: {{ generated_by }} | Total Records: {{ assets.count }}
+</div>
+
+<!-- On-Screen Header -->
 <div class="page-header no-print">
   <div>
     <h1><i class="bi bi-pc-display me-2 text-primary"></i>Asset Report</h1>
@@ -21,8 +35,17 @@
       <li class="breadcrumb-item active">Asset Report</li>
     </ol></nav>
   </div>
-  <div class="d-flex gap-2 no-print">
-    <button class="btn btn-outline-secondary btn-sm" onclick="window.print()">
+  <div class="d-flex gap-2 no-print flex-wrap">
+    <a href="{% url 'reports:asset_pdf' %}?{{ request.GET.urlencode }}" class="btn btn-outline-danger btn-sm">
+      <i class="bi bi-filetype-pdf me-1"></i>PDF
+    </a>
+    <a href="{% url 'reports:asset_excel' %}?{{ request.GET.urlencode }}" class="btn btn-outline-success btn-sm">
+      <i class="bi bi-file-earmark-spreadsheet me-1"></i>Excel
+    </a>
+    <a href="{% url 'reports:asset_csv' %}?{{ request.GET.urlencode }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-filetype-csv me-1"></i>CSV
+    </a>
+    <button class="btn btn-outline-dark btn-sm" onclick="window.print()">
       <i class="bi bi-printer me-1"></i>Print
     </button>
     <a href="{% url 'reports:index' %}" class="btn btn-outline-primary btn-sm">
@@ -31,35 +54,96 @@
   </div>
 </div>
 
-<!-- Report Meta & Status Summary -->
-<div class="row g-3 mb-3">
-  <div class="col-12 col-md-auto">
-    <div class="text-muted small pt-2"><i class="bi bi-clock me-1"></i>Generated: {{ generated_at|date:"N j, Y, P" }}</div>
+<!-- Summary Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="stat-icon purple"><i class="bi bi-pc-display"></i></div>
+        <div><div class="text-muted small">Total Assets</div><div class="fs-5 fw-bold">{{ assets.count|intcomma }}</div></div>
+      </div>
+    </div>
   </div>
-  {% for s in status_summary %}
-  <div class="col-auto">
-    <span class="badge border px-3 py-2 fs-6
-      {% if s.asset_status == 'Available' %}bg-success-subtle text-success
-      {% elif s.asset_status == 'Assigned' %}bg-primary-subtle text-primary
-      {% elif s.asset_status == 'Under Maintenance' %}bg-warning-subtle text-warning
-      {% elif s.asset_status == 'Disposed' %}bg-secondary-subtle text-secondary
-      {% else %}bg-danger-subtle text-danger{% endif %}">
-      {{ s.asset_status }}: {{ s.count }}
-    </span>
+  <div class="col-6 col-xl-3">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="stat-icon green"><i class="bi bi-check-circle"></i></div>
+        <div><div class="text-muted small">Available</div><div class="fs-5 fw-bold text-success">{{ available|intcomma }}</div></div>
+      </div>
+    </div>
   </div>
-  {% endfor %}
+  <div class="col-6 col-xl-3">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="stat-icon blue"><i class="bi bi-person-check"></i></div>
+        <div><div class="text-muted small">Assigned</div><div class="fs-5 fw-bold text-primary">{{ assigned|intcomma }}</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="stat-icon orange"><i class="bi bi-tools"></i></div>
+        <div><div class="text-muted small">Under Maintenance</div><div class="fs-5 fw-bold text-warning">{{ maintenance|intcomma }}</div></div>
+      </div>
+    </div>
+  </div>
 </div>
 
-<!-- Filter Form -->
+<!-- Charts Row -->
+<div class="row g-3 mb-4 no-print">
+  <div class="col-lg-5">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-transparent border-0 pb-0">
+        <h6 class="fw-semibold mb-0"><i class="bi bi-pie-chart me-2"></i>Asset Status Distribution</h6>
+      </div>
+      <div class="card-body d-flex align-items-center justify-content-center">
+        <canvas id="statusDonut" style="height:220px;"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-7">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-transparent border-0 pb-0">
+        <h6 class="fw-semibold mb-0"><i class="bi bi-bar-chart-horizontal me-2"></i>Assets by Category</h6>
+      </div>
+      <div class="card-body"><canvas id="catHorizBar" style="height:220px;"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- Filter Bar -->
 <div class="card mb-3 no-print">
   <div class="card-body py-2">
     <form method="get" class="row g-2 align-items-end">
-      <div class="col-md-4">
-        <label class="form-label mb-1 small fw-semibold">Filter by Status</label>
+      <div class="col-md-2">
+        <label class="form-label mb-1 small fw-semibold">Search</label>
+        <input type="text" name="search" value="{{ search_filter }}" class="form-control form-control-sm" placeholder="Name or code…">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label mb-1 small fw-semibold">Status</label>
         <select name="status" class="form-select form-select-sm">
           <option value="">All Statuses</option>
           {% for val, label in status_choices %}
           <option value="{{ val }}" {% if status_filter == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label mb-1 small fw-semibold">Category</label>
+        <select name="category" class="form-select form-select-sm">
+          <option value="">All Categories</option>
+          {% for cat in categories %}
+          <option value="{{ cat.id }}" {% if cat_filter == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.category_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label mb-1 small fw-semibold">Location</label>
+        <select name="location" class="form-select form-select-sm">
+          <option value="">All Locations</option>
+          {% for loc in locations %}
+          <option value="{{ loc.id }}" {% if location_filter == loc.id|stringformat:"s" %}selected{% endif %}>{{ loc.location_name }}</option>
           {% endfor %}
         </select>
       </div>
@@ -72,17 +156,17 @@
 </div>
 
 <!-- Data Table -->
-<div class="card">
+<div class="card border-0 shadow-sm">
   <div class="card-header d-flex align-items-center justify-content-between">
     <h6 class="mb-0">Asset Listing</h6>
-    <span class="badge bg-secondary">{{ assets.count }} assets</span>
+    <span class="badge bg-secondary">{{ assets.count }} records</span>
   </div>
   <div class="card-body p-0">
     <div class="table-responsive">
-      <table class="table table-hover mb-0">
-        <thead>
+      <table id="assetTable" class="table table-hover table-bordered mb-0" style="width:100%">
+        <thead class="table-light">
           <tr>
-            <th>#</th>
+            <th style="width:40px">#</th>
             <th>Asset Code</th>
             <th>Asset Name</th>
             <th>Category</th>
@@ -97,37 +181,97 @@
         <tbody>
           {% for asset in assets %}
           <tr>
-            <td class="text-muted" style="font-size:.8rem;">{{ forloop.counter }}</td>
+            <td class="text-muted small">{{ forloop.counter }}</td>
             <td><code>{{ asset.asset_code }}</code></td>
             <td class="fw-semibold">{{ asset.asset_name }}</td>
             <td>{{ asset.category.category_name }}</td>
             <td>{{ asset.location.location_name|default:"—" }}</td>
             <td>{{ asset.assigned_to.full_name|default:"—" }}</td>
-            <td style="font-size:.8rem;">{{ asset.purchase_date|date:"M j, Y"|default:"—" }}</td>
+            <td class="small">{{ asset.purchase_date|date:"M j, Y"|default:"—" }}</td>
             <td class="text-end">${{ asset.purchase_price|floatformat:2 }}</td>
-            <td style="font-size:.8rem;">
-              {% if asset.warranty_expiry_date %}
-                {{ asset.warranty_expiry_date|date:"M j, Y" }}
-                {% if asset.is_warranty_expiring_soon %}
-                  <span class="badge bg-warning text-dark ms-1">Expiring</span>
-                {% endif %}
-              {% else %}—{% endif %}
-            </td>
-            <td>
-              {% if asset.asset_status == 'Available' %}<span class="badge bg-success">{{ asset.asset_status }}</span>
-              {% elif asset.asset_status == 'Assigned' %}<span class="badge bg-primary">{{ asset.asset_status }}</span>
-              {% elif asset.asset_status == 'Under Maintenance' %}<span class="badge bg-warning text-dark">{{ asset.asset_status }}</span>
-              {% elif asset.asset_status == 'Disposed' %}<span class="badge bg-secondary">{{ asset.asset_status }}</span>
-              {% else %}<span class="badge bg-danger">{{ asset.asset_status }}</span>{% endif %}
-            </td>
+            <td class="small">{% if asset.warranty_expiry_date %}{{ asset.warranty_expiry_date|date:"M j, Y" }}{% if asset.is_warranty_expiring_soon %} <span class="badge bg-warning text-dark">Expiring</span>{% endif %}{% else %}—{% endif %}</td>
+            <td>{% if asset.asset_status == 'Available' %}<span class="badge bg-success">{{ asset.asset_status }}</span>{% elif asset.asset_status == 'Assigned' %}<span class="badge bg-primary">{{ asset.asset_status }}</span>{% elif asset.asset_status == 'Under Maintenance' %}<span class="badge bg-warning text-dark">{{ asset.asset_status }}</span>{% elif asset.asset_status == 'Disposed' %}<span class="badge bg-secondary">{{ asset.asset_status }}</span>{% else %}<span class="badge bg-danger">{{ asset.asset_status }}</span>{% endif %}</td>
           </tr>
           {% empty %}
-          <tr><td colspan="10" class="text-center text-muted py-4"><i class="bi bi-inbox d-block fs-3 mb-2"></i>No assets found.</td></tr>
+          <tr><td colspan="10" class="text-center text-muted py-4">
+            <i class="bi bi-inbox d-block fs-3 mb-2"></i>No assets found.
+          </td></tr>
           {% endfor %}
         </tbody>
+        <tfoot class="table-light d-none">
+          <tr>
+            <th>#</th><th>Asset Code</th><th>Asset Name</th><th>Category</th>
+            <th>Location</th><th>Assigned To</th><th>Purchase Date</th>
+            <th>Purchase Price</th><th>Warranty Expiry</th><th>Status</th>
+          </tr>
+        </tfoot>
       </table>
     </div>
   </div>
 </div>
 
+<!-- Print Footer -->
+<div class="report-print-footer mt-3">
+  EIAMS — Confidential | Total: {{ assets.count }} records
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
+<script>
+$(document).ready(function() {
+  var $tbody = $('#assetTable tbody');
+  if ($tbody.find('tr td[colspan]').length === 0 && $tbody.find('tr').length > 0) {
+    $('#assetTable').DataTable({
+      pageLength: 25,
+      order: [[2, 'asc']],
+      autoWidth: false,
+      language: { search: 'Quick Search:' },
+      columnDefs: [{ orderable: false, targets: [0] }],
+    });
+  }
+});
+
+const statusColors = {
+  'Available': '#10b981', 'Assigned': '#3b82f6',
+  'Under Maintenance': '#f59e0b', 'Disposed': '#6b7280',
+  'Lost': '#ef4444', 'In Transit': '#06b6d4',
+};
+
+// Status Doughnut
+const donutCtx = document.getElementById('statusDonut');
+if (donutCtx) {
+  const lbls = {{ asset_labels|safe }};
+  new Chart(donutCtx, {
+    type: 'doughnut',
+    data: {
+      labels: lbls,
+      datasets: [{ data: {{ asset_values|safe }},
+        backgroundColor: lbls.map(l => statusColors[l] || '#94a3b8'),
+        borderWidth: 2 }],
+    },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'right', labels: { font: { size: 10 }, boxWidth: 12 } } } },
+  });
+}
+
+// Category Horizontal Bar
+const catCtx = document.getElementById('catHorizBar');
+if (catCtx) {
+  new Chart(catCtx, {
+    type: 'bar',
+    data: {
+      labels: {{ cat_bar_labels|safe }},
+      datasets: [{ label: 'Assets', data: {{ cat_bar_values|safe }},
+        backgroundColor: 'rgba(124,58,237,.75)', borderRadius: 4 }],
+    },
+    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { x: { beginAtZero: true, ticks: { font: { size: 10 } } },
+                y: { ticks: { font: { size: 10 } } } } },
+  });
+}
+</script>
 {% endblock %}

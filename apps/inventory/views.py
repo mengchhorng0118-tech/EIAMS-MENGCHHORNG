@@ -96,16 +96,29 @@ def category_update(request, pk):
 @login_required
 @admin_or_above_required
 def category_delete(request, pk):
-    """Delete a category if it has no linked items."""
+    """Deactivate a category if it has linked items, otherwise delete."""
+    from django.db.models import ProtectedError
     category = get_object_or_404(Category, pk=pk)
     if request.method == 'POST':
-        # Check if category has linked items or assets
-        if category.inventory_items.exists() or hasattr(category, 'assets') and category.assets.exists():
-            messages.error(request, f'Cannot delete "{category.category_name}" – it has linked items. Deactivate it instead.')
+        has_items  = category.inventory_items.exists()
+        has_assets = hasattr(category, 'assets') and category.assets.exists()
+        if has_items or has_assets:
+            category.status = 'Inactive'
+            category.save(update_fields=['status', 'updated_at'])
+            messages.warning(
+                request,
+                f'"{category.category_name}" has linked items/assets and cannot be deleted. '
+                'It has been set to Inactive instead.'
+            )
             return redirect('inventory:category_list')
-        category_name = category.category_name
-        category.delete()
-        messages.success(request, f'Category "{category_name}" deleted successfully.')
+        try:
+            name = category.category_name
+            category.delete()
+            messages.success(request, f'Category "{name}" deleted successfully.')
+        except ProtectedError:
+            category.status = 'Inactive'
+            category.save(update_fields=['status', 'updated_at'])
+            messages.warning(request, f'"{category.category_name}" is in use and has been deactivated instead.')
         return redirect('inventory:category_list')
     return render(request, 'inventory/confirm_delete.html', {
         'obj': category, 'obj_name': category.category_name,
@@ -185,15 +198,30 @@ def location_update(request, pk):
 @login_required
 @admin_or_above_required
 def location_delete(request, pk):
-    """Delete a location if it has no linked assets."""
+    """Deactivate a location if it has assets, otherwise delete."""
+    from django.db.models import ProtectedError
     loc = get_object_or_404(Location, pk=pk)
     if request.method == 'POST':
-        if hasattr(loc, 'assets') and loc.assets.filter(asset_status__in=['Available','Assigned','Under Maintenance']).exists():
-            messages.error(request, f'Cannot delete "{loc.location_name}" – it has active assets assigned to it.')
+        has_assets = hasattr(loc, 'assets') and loc.assets.filter(
+            is_active=True
+        ).exists()
+        if has_assets:
+            loc.status = 'Inactive'
+            loc.save(update_fields=['status', 'updated_at'])
+            messages.warning(
+                request,
+                f'"{loc.location_name}" has active assets and cannot be deleted. '
+                'It has been set to Inactive instead.'
+            )
             return redirect('inventory:location_list')
-        name = loc.location_name
-        loc.delete()
-        messages.success(request, f'Location "{name}" deleted successfully.')
+        try:
+            name = loc.location_name
+            loc.delete()
+            messages.success(request, f'Location "{name}" deleted successfully.')
+        except ProtectedError:
+            loc.status = 'Inactive'
+            loc.save(update_fields=['status', 'updated_at'])
+            messages.warning(request, f'"{loc.location_name}" is in use and has been deactivated instead.')
         return redirect('inventory:location_list')
     return render(request, 'inventory/confirm_delete.html', {
         'obj': loc, 'obj_name': loc.location_name,
@@ -287,15 +315,29 @@ def supplier_update(request, pk):
 @login_required
 @admin_or_above_required
 def supplier_delete(request, pk):
-    """Delete a supplier if no linked items exist."""
+    """Deactivate a supplier if it has linked records, otherwise delete."""
+    from django.db.models import ProtectedError
     supplier = get_object_or_404(Supplier, pk=pk)
     if request.method == 'POST':
-        if supplier.inventory_items.exists():
-            messages.error(request, f'Cannot delete "{supplier.supplier_name}" – it has linked inventory items.')
+        has_items  = supplier.inventory_items.exists()
+        has_assets = hasattr(supplier, 'assets') and supplier.assets.exists()
+        if has_items or has_assets:
+            supplier.status = 'Inactive'
+            supplier.save(update_fields=['status', 'updated_at'])
+            messages.warning(
+                request,
+                f'"{supplier.supplier_name}" has linked inventory items or assets and cannot be deleted. '
+                'It has been set to Inactive instead.'
+            )
             return redirect('inventory:supplier_list')
-        name = supplier.supplier_name
-        supplier.delete()
-        messages.success(request, f'Supplier "{name}" deleted successfully.')
+        try:
+            name = supplier.supplier_name
+            supplier.delete()
+            messages.success(request, f'Supplier "{name}" deleted successfully.')
+        except ProtectedError:
+            supplier.status = 'Inactive'
+            supplier.save(update_fields=['status', 'updated_at'])
+            messages.warning(request, f'"{supplier.supplier_name}" is in use and has been deactivated instead.')
         return redirect('inventory:supplier_list')
     return render(request, 'inventory/confirm_delete.html', {
         'obj': supplier, 'obj_name': supplier.supplier_name,
@@ -415,20 +457,98 @@ def item_update(request, pk):
 @login_required
 @admin_or_above_required
 def item_delete(request, pk):
-    """Delete an inventory item (only if no stock movements exist)."""
+    """Delete an inventory item (only if no stock movements exist). Falls back to deactivate."""
+    from django.db.models import ProtectedError
     item = get_object_or_404(InventoryItem, pk=pk)
     if request.method == 'POST':
-        if hasattr(item, 'stock_movements') and item.stock_movements.exists():
-            messages.error(request, f'Cannot delete "{item.item_name}" – it has stock movement history. Deactivate it instead.')
+        # Check for any related records that block deletion
+        if item.stock_movements.exists() or item.low_stock_alerts.exists():
+            # Deactivate instead of hard delete
+            item.status = 'Inactive'
+            item.save(update_fields=['status', 'updated_at'])
+            messages.warning(
+                request,
+                f'"{item.item_name}" has stock history and cannot be permanently deleted. '
+                'It has been set to Inactive instead.'
+            )
             return redirect('inventory:item_list')
-        name = item.item_name
-        item.delete()
-        messages.success(request, f'Inventory item "{name}" deleted successfully.')
+        try:
+            name = item.item_name
+            item.delete()
+            messages.success(request, f'Inventory item "{name}" deleted successfully.')
+        except ProtectedError:
+            item.status = 'Inactive'
+            item.save(update_fields=['status', 'updated_at'])
+            messages.warning(request, f'"{item.item_name}" is referenced by other records and has been deactivated instead.')
         return redirect('inventory:item_list')
     return render(request, 'inventory/confirm_delete.html', {
         'obj': item, 'obj_name': item.item_name,
         'page_title': 'Delete Item', 'cancel_url': 'inventory:item_list'
     })
+
+
+# ══════════════════════════════════════════════════════════════
+# QUICK STOCK IN  — inline add from item list (no item select)
+# ══════════════════════════════════════════════════════════════
+
+@login_required
+@manager_or_above_required
+def quick_stock_in(request, pk):
+    """
+    POST-only view: record a Stock IN movement for a specific item
+    directly from the item list page.  The item is known from the URL,
+    so the user only fills in quantity + optional reference/remarks.
+    On success redirects back to item_list (or the page they came from).
+    """
+    from apps.stock.models import StockMovement, LowStockAlert
+    from django.utils import timezone
+
+    item = get_object_or_404(InventoryItem, pk=pk)
+
+    if request.method == 'POST':
+        try:
+            qty = int(request.POST.get('quantity', 0))
+        except (ValueError, TypeError):
+            qty = 0
+
+        if qty < 1:
+            messages.error(request, 'Quantity must be at least 1.')
+            return redirect(request.POST.get('next', 'inventory:item_list'))
+
+        ref     = request.POST.get('reference_no', '').strip() or None
+        remarks = request.POST.get('remarks', '').strip() or f'Quick Stock IN via item list'
+
+        movement = StockMovement.objects.create(
+            item          = item,
+            movement_type = 'Stock IN',
+            quantity      = qty,
+            reference_no  = ref,
+            remarks       = remarks,
+            created_by    = request.user,
+        )
+        item.current_qty += qty
+        item.save(update_fields=['current_qty', 'updated_at'])
+        movement.qty_after = item.current_qty
+        movement.save(update_fields=['qty_after'])
+
+        # Resolve low-stock alert if now above threshold
+        if item.current_qty > item.min_qty:
+            LowStockAlert.objects.filter(
+                item=item, status=LowStockAlert.STATUS_NEW
+            ).update(status=LowStockAlert.STATUS_RESOLVED, resolved_at=timezone.now())
+        else:
+            LowStockAlert.create_if_needed(item)
+
+        messages.success(
+            request,
+            f'✔ Stock IN: +{qty} {item.unit} added to "{item.item_name}". '
+            f'New total: {item.current_qty} {item.unit}.'
+        )
+        next_url = request.POST.get('next', '')
+        return redirect(next_url if next_url else 'inventory:item_list')
+
+    # GET not supported — redirect back
+    return redirect('inventory:item_list')
 
 
 @login_required

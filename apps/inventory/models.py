@@ -301,6 +301,20 @@ class InventoryItem(models.Model):
         verbose_name='Minimum Quantity',
         help_text='Low-stock alert triggers when current_qty ≤ this value'
     )
+    image          = models.ImageField(
+        upload_to='inventory/items/',
+        blank=True,
+        null=True,
+        verbose_name='Product Image',
+        help_text='Upload a product photo (JPG/PNG, max 5MB)'
+    )
+    image_url      = models.URLField(
+        max_length=500,
+        blank=True,
+        null=True,
+        verbose_name='Product Image URL',
+        help_text='External product image URL (used when no local image is uploaded)'
+    )
     description    = models.TextField(
         blank=True,
         null=True,
@@ -322,6 +336,15 @@ class InventoryItem(models.Model):
 
     def __str__(self):
         return f"{self.item_code} - {self.item_name}"
+
+    def get_image(self):
+        """Return local image URL if uploaded, else image_url, else None."""
+        if self.image:
+            from django.conf import settings
+            return f"{settings.MEDIA_URL}{self.image}"
+        if self.image_url:
+            return self.image_url
+        return None
 
     def get_display_name(self, language='en'):
         """Return the Khmer name if language is 'km' and it exists, else English."""

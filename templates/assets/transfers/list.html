@@ -199,7 +199,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-        <form method="post" id="deleteForm"><{% csrf_token %}<button type="submit" class="btn btn-danger btn-sm">Delete</button></form>
+        <form method="post" id="deleteForm">{% csrf_token %}<button type="submit" class="btn btn-danger btn-sm">Delete</button></form>
       </div>
     </div>
   </div>

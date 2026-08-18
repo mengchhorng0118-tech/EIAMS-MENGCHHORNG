@@ -79,6 +79,7 @@
             <a href="{% url 'accounts:user_detail' u.pk %}" class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip" title="View"><i class="bi bi-eye"></i></a>
             <a href="{% url 'accounts:user_update' u.pk %}" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="Edit"><i class="bi bi-pencil"></i></a>
             {% if u != request.user %}
+            <a href="{% url 'accounts:admin_change_user_password' u.pk %}" class="btn btn-sm btn-outline-warning" data-bs-toggle="tooltip" title="Change Password"><i class="bi bi-key"></i></a>
             <a href="{% url 'accounts:user_delete' u.pk %}" class="btn btn-sm btn-outline-danger" data-bs-toggle="tooltip" title="Deactivate"><i class="bi bi-person-x"></i></a>
             {% endif %}
           </td>

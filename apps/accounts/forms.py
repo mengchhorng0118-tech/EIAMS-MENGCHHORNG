@@ -222,3 +222,44 @@ class CustomPasswordChangeForm(DjangoPasswordChangeForm):
             'placeholder': 'Confirm new password',
         })
     )
+
+
+class AdminPasswordChangeForm(forms.Form):
+    """
+    Form for Admin / Super Admin to reset another user's password.
+    Does NOT require the old password — admin privilege only.
+    """
+
+    new_password1 = forms.CharField(
+        label='New Password',
+        widget=forms.PasswordInput(attrs={
+            'class':       'form-control',
+            'placeholder': 'Enter new password',
+            'autocomplete': 'new-password',
+            'id':          'id_new_password1',
+        }),
+        help_text='Minimum 8 characters.',
+    )
+    new_password2 = forms.CharField(
+        label='Confirm New Password',
+        widget=forms.PasswordInput(attrs={
+            'class':       'form-control',
+            'placeholder': 'Confirm new password',
+            'autocomplete': 'new-password',
+            'id':          'id_new_password2',
+        }),
+    )
+
+    def clean_new_password1(self):
+        password = self.cleaned_data.get('new_password1', '')
+        if len(password) < 8:
+            raise forms.ValidationError('Password must be at least 8 characters long.')
+        return password
+
+    def clean(self):
+        cleaned_data = super().clean()
+        p1 = cleaned_data.get('new_password1')
+        p2 = cleaned_data.get('new_password2')
+        if p1 and p2 and p1 != p2:
+            self.add_error('new_password2', 'Passwords do not match.')
+        return cleaned_data

@@ -1,13 +1,14 @@
 {% extends "base.html" %}
-{% block title %}Deactivate User{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Deactivate User" %}{% endblock %}
 {% block content %}
 
 <div class="page-header">
   <div>
-    <h1><i class="bi bi-person-x me-2 text-danger"></i>Deactivate User</h1>
+    <h1><i class="bi bi-person-x me-2 text-danger"></i>{% trans "Deactivate / Delete User" %}</h1>
     <nav aria-label="breadcrumb"><ol class="breadcrumb">
-      <li class="breadcrumb-item"><a href="{% url 'accounts:user_list' %}">Users</a></li>
-      <li class="breadcrumb-item active">Deactivate</li>
+      <li class="breadcrumb-item"><a href="{% url 'accounts:user_list' %}">{% trans "Users" %}</a></li>
+      <li class="breadcrumb-item active">{% trans "Deactivate" %}</li>
     </ol></nav>
   </div>
 </div>
@@ -15,23 +16,54 @@
 <div class="row justify-content-center">
   <div class="col-lg-5">
     <div class="card border-danger">
-      <div class="card-header bg-danger text-white"><h6 class="mb-0"><i class="bi bi-exclamation-triangle me-2"></i>Confirm Deactivation</h6></div>
+      <div class="card-header bg-danger text-white">
+        <h6 class="mb-0"><i class="bi bi-exclamation-triangle me-2"></i>{% trans "Confirm Action" %}</h6>
+      </div>
       <div class="card-body text-center py-4">
-        <div class="user-avatar mx-auto mb-3" style="width:60px;height:60px;font-size:1.5rem;background:#dc2626;">
+
+        <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3"
+             style="width:64px;height:64px;background:#fee2e2;color:#dc2626;font-size:1.6rem;font-weight:700;">
           {{ user_obj.full_name|first|upper }}
         </div>
-        <h5>{{ user_obj.full_name }}</h5>
-        <p class="text-muted">{{ user_obj.email }}</p>
-        <div class="alert alert-warning text-start mt-3">
+
+        <h5 class="mb-1">{{ user_obj.full_name }}</h5>
+        <p class="text-muted mb-1">{{ user_obj.email }}</p>
+        <span class="badge bg-primary mb-3">{{ user_obj.get_role_name }}</span>
+
+        <div class="alert alert-warning text-start mt-2 mb-3" style="font-size:.85rem;">
           <i class="bi bi-info-circle me-2"></i>
-          This will deactivate the account. The user will no longer be able to log in.
-          All their data and history will be preserved.
+          <strong>{% trans "Deactivate" %}:</strong> {% trans "The user can no longer log in, but all their data is preserved." %}<br>
+          {% if can_hard_delete %}
+          <i class="bi bi-trash3 me-2 mt-1"></i>
+          <strong>{% trans "Permanent Delete" %}:</strong> {% trans "Removes the account entirely. Only possible if the user has no activity history." %}
+          {% endif %}
         </div>
-        <form method="post" class="d-flex gap-2 justify-content-center mt-3">
+
+        {# ── Deactivate form ── #}
+        <form method="post" class="mb-2">
           {% csrf_token %}
-          <button type="submit" class="btn btn-danger"><i class="bi bi-person-x me-1"></i>Confirm Deactivate</button>
-          <a href="{% url 'accounts:user_list' %}" class="btn btn-outline-secondary">Cancel</a>
+          <input type="hidden" name="action" value="deactivate">
+          <button type="submit" class="btn btn-warning w-100">
+            <i class="bi bi-person-x me-1"></i>{% trans "Deactivate Account" %}
+          </button>
         </form>
+
+        {# ── Hard delete — Super Admin only ── #}
+        {% if can_hard_delete %}
+        <form method="post" class="mb-2"
+              onsubmit="return confirm('{% trans "Permanently delete this user? This cannot be undone." %}')">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="hard_delete">
+          <button type="submit" class="btn btn-danger w-100">
+            <i class="bi bi-trash3 me-1"></i>{% trans "Permanently Delete" %}
+          </button>
+        </form>
+        {% endif %}
+
+        <a href="{% url 'accounts:user_list' %}" class="btn btn-outline-secondary w-100">
+          <i class="bi bi-x me-1"></i>{% trans "Cancel" %}
+        </a>
+
       </div>
     </div>
   </div>

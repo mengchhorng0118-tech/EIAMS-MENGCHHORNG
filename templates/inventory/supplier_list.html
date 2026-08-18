@@ -1,34 +1,35 @@
 {% extends "base.html" %}
-{% block title %}Suppliers{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Suppliers" %}{% endblock %}
 {% block content %}
 
 <div class="page-header">
   <div>
-    <h1><i class="bi bi-truck me-2 text-primary"></i>Suppliers</h1>
+    <h1><i class="bi bi-truck me-2 text-primary"></i>{% trans "Suppliers" %}</h1>
     <nav aria-label="breadcrumb"><ol class="breadcrumb">
-      <li class="breadcrumb-item"><a href="{% url 'dashboard:home' %}">Dashboard</a></li>
-      <li class="breadcrumb-item active">Suppliers</li>
+      <li class="breadcrumb-item"><a href="{% url 'dashboard:home' %}">{% trans "Dashboard" %}</a></li>
+      <li class="breadcrumb-item active">{% trans "Suppliers" %}</li>
     </ol></nav>
   </div>
-  <a href="{% url 'inventory:supplier_create' %}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Add Supplier</a>
+  <a href="{% url 'inventory:supplier_create' %}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>{% trans "Add Supplier" %}</a>
 </div>
 
 <div class="card mb-3">
   <div class="card-body py-2">
     <form method="get" class="row g-2 align-items-end">
       <div class="col-md-5">
-        <input type="text" name="q" class="form-control form-control-sm" placeholder="Search name, contact, email…" value="{{ search_query }}">
+        <input type="text" name="q" class="form-control form-control-sm" placeholder="{% trans 'Search name, contact, email…' %}" value="{{ search_query }}">
       </div>
       <div class="col-md-3">
         <select name="status" class="form-select form-select-sm">
-          <option value="">All Status</option>
-          <option value="Active" {% if status_filter == 'Active' %}selected{% endif %}>Active</option>
-          <option value="Inactive" {% if status_filter == 'Inactive' %}selected{% endif %}>Inactive</option>
+          <option value="">{% trans "All Status" %}</option>
+          <option value="Active" {% if status_filter == 'Active' %}selected{% endif %}>{% trans "Active" %}</option>
+          <option value="Inactive" {% if status_filter == 'Inactive' %}selected{% endif %}>{% trans "Inactive" %}</option>
         </select>
       </div>
       <div class="col-auto">
-        <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-search me-1"></i>Filter</button>
-        <a href="{% url 'inventory:supplier_list' %}" class="btn btn-outline-secondary btn-sm ms-1">Clear</a>
+        <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-search me-1"></i>{% trans "Filter" %}</button>
+        <a href="{% url 'inventory:supplier_list' %}" class="btn btn-outline-secondary btn-sm ms-1">{% trans "Clear" %}</a>
       </div>
     </form>
   </div>
@@ -36,12 +37,12 @@
 
 <div class="card">
   <div class="card-header d-flex align-items-center justify-content-between">
-    <h6 class="mb-0">Suppliers <span class="badge bg-secondary ms-2">{{ total }}</span></h6>
+    <h6 class="mb-0">{% trans "Suppliers" %} <span class="badge bg-secondary ms-2">{{ total }}</span></h6>
   </div>
   <div class="table-responsive">
     <table class="table table-hover mb-0">
       <thead><tr>
-        <th>Name</th><th>Contact</th><th>Phone</th><th>Email</th><th>Status</th><th class="text-end">Actions</th>
+        <th>{% trans "Name" %}</th><th>{% trans "Contact" %}</th><th>{% trans "Phone" %}</th><th>{% trans "Email" %}</th><th>{% trans "Status" %}</th><th class="text-end">{% trans "Actions" %}</th>
       </tr></thead>
       <tbody>
         {% for sup in page_obj %}
@@ -54,14 +55,14 @@
           <td style="font-size:.875rem;">{{ sup.email|default:"—" }}</td>
           <td><span class="badge {% if sup.status == 'Active' %}bg-success{% else %}bg-secondary{% endif %}">{{ sup.status }}</span></td>
           <td class="text-end">
-            <a href="{% url 'inventory:supplier_detail' sup.pk %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-eye"></i></a>
-            <a href="{% url 'inventory:supplier_update' sup.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
-            <a href="{% url 'inventory:supplier_delete' sup.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash3"></i></a>
+            <a href="{% url 'inventory:supplier_detail' sup.pk %}" class="btn btn-sm btn-outline-secondary" title="{% trans 'View' %}"><i class="bi bi-eye"></i></a>
+            <a href="{% url 'inventory:supplier_update' sup.pk %}" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
+            <a href="{% url 'inventory:supplier_delete' sup.pk %}" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}"><i class="bi bi-trash3"></i></a>
           </td>
         </tr>
         {% empty %}
         <tr><td colspan="6" class="text-center text-muted py-5">
-          <i class="bi bi-truck d-block fs-2 mb-2"></i>No suppliers found.
+          <i class="bi bi-truck d-block fs-2 mb-2"></i>{% trans "No suppliers found." %}
         </td></tr>
         {% endfor %}
       </tbody>

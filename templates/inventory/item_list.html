@@ -89,6 +89,19 @@
         {% for item in page_obj %}
         <tr>
           <td class="item-name-cell">
+            {% with img=item.get_image %}
+            {% if img %}
+            <img src="{{ img }}" alt="{{ item.item_name }}"
+                 style="width:42px;height:42px;object-fit:contain;border-radius:6px;
+                        background:#f8f9fa;border:1px solid #e9ecef;margin-right:10px;vertical-align:middle;">
+            {% else %}
+            <span style="display:inline-flex;align-items:center;justify-content:center;
+                         width:42px;height:42px;background:#f8f9fa;border:1px solid #e9ecef;
+                         border-radius:6px;margin-right:10px;vertical-align:middle;color:#adb5bd;">
+              <i class="bi bi-phone"></i>
+            </span>
+            {% endif %}
+            {% endwith %}
             <span class="item-code-mono">{{ item.item_code }}</span>
             <a href="{% url 'inventory:item_detail' item.pk %}">
               {# Show Khmer name if language=km and Khmer name exists, else English #}
@@ -121,6 +134,14 @@
           <td class="text-end">
             <a href="{% url 'inventory:item_detail' item.pk %}" class="btn btn-sm btn-outline-secondary" title="{% trans 'View' %}"><i class="bi bi-eye"></i></a>
             <a href="{% url 'inventory:item_qr' item.pk %}"     class="btn btn-sm btn-outline-info"      title="{% trans 'QR Code' %}"><i class="bi bi-qr-code"></i></a>
+            <button type="button" class="btn btn-sm btn-success" title="{% trans 'Quick Stock IN' %}"
+                    data-bs-toggle="modal" data-bs-target="#stockInModal"
+                    data-item-id="{{ item.pk }}"
+                    data-item-name="{{ item.item_name }}"
+                    data-item-unit="{{ item.unit }}"
+                    data-item-qty="{{ item.current_qty }}">
+              <i class="bi bi-plus-lg"></i>
+            </button>
             <a href="{% url 'inventory:item_update' item.pk %}" class="btn btn-sm btn-outline-primary"   title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
             <a href="{% url 'inventory:item_delete' item.pk %}" class="btn btn-sm btn-outline-danger"    title="{% trans 'Delete' %}"><i class="bi bi-trash3"></i></a>
           </td>
@@ -137,4 +158,121 @@
   <div class="card-footer">{% include "includes/pagination.html" with page_obj=page_obj %}</div>
   {% endif %}
 </div>
+
+{# ── Quick Stock IN Modal ─────────────────────────────────────────────────── #}
+<div class="modal fade" id="stockInModal" tabindex="-1" aria-labelledby="stockInModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:420px;">
+    <div class="modal-content border-0 shadow-lg rounded-4">
+      <form method="post" id="stockInForm" action="">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+
+        <div class="modal-header border-0 rounded-top-4" style="background:linear-gradient(135deg,#198754,#0d6832);">
+          <div>
+            <h5 class="modal-title text-white mb-0" id="stockInModalLabel">
+              <i class="bi bi-plus-circle-fill me-2"></i>Quick Stock IN
+            </h5>
+            <div class="text-white opacity-75 mt-1" style="font-size:.82rem;" id="modalItemName"></div>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body px-4 pt-3 pb-1">
+
+          {# Current stock info bar #}
+          <div class="d-flex align-items-center justify-content-between mb-3 p-2 rounded-3"
+               style="background:#f8f9fa;border:1px solid #e9ecef;">
+            <span class="text-muted" style="font-size:.85rem;">
+              <i class="bi bi-box-seam me-1"></i>Current stock
+            </span>
+            <span id="modalCurrentQty" class="fw-bold font-monospace text-dark"></span>
+          </div>
+
+          {# Quantity input #}
+          <div class="mb-3">
+            <label class="form-label fw-semibold">
+              Add Quantity <span class="text-danger">*</span>
+            </label>
+            <div class="input-group input-group-lg mb-2">
+              <button type="button" class="btn btn-outline-secondary px-3"
+                      onclick="adjustQty(-1)" tabindex="-1">
+                <i class="bi bi-dash-lg"></i>
+              </button>
+              <input type="number" id="modalQtyInput" name="quantity"
+                     class="form-control text-center fw-bold"
+                     style="font-size:1.6rem;letter-spacing:2px;"
+                     value="1" min="1" required autofocus>
+              <button type="button" class="btn btn-outline-secondary px-3"
+                      onclick="adjustQty(1)" tabindex="-1">
+                <i class="bi bi-plus-lg"></i>
+              </button>
+            </div>
+            {# Quick-pick buttons #}
+            <div class="d-flex gap-1 flex-wrap">
+              <span class="text-muted me-1" style="font-size:.75rem;line-height:2;">Quick:</span>
+              <button type="button" class="btn btn-outline-success btn-sm px-3" onclick="setQty(5)">+5</button>
+              <button type="button" class="btn btn-outline-success btn-sm px-3" onclick="setQty(10)">+10</button>
+              <button type="button" class="btn btn-outline-success btn-sm px-3" onclick="setQty(20)">+20</button>
+              <button type="button" class="btn btn-outline-success btn-sm px-3" onclick="setQty(50)">+50</button>
+              <button type="button" class="btn btn-outline-success btn-sm px-3" onclick="setQty(100)">+100</button>
+            </div>
+          </div>
+
+          {# Reference No #}
+          <div class="mb-2">
+            <label class="form-label text-muted mb-1" style="font-size:.82rem;">
+              <i class="bi bi-file-earmark-text me-1"></i>Reference No
+              <span class="fw-normal">(PO / Invoice — optional)</span>
+            </label>
+            <input type="text" name="reference_no" class="form-control form-control-sm"
+                   placeholder="e.g. PO-2025-001">
+          </div>
+
+          {# Remarks #}
+          <div class="mb-2">
+            <label class="form-label text-muted mb-1" style="font-size:.82rem;">
+              <i class="bi bi-chat-left-text me-1"></i>Remarks <span class="fw-normal">(optional)</span>
+            </label>
+            <input type="text" name="remarks" class="form-control form-control-sm"
+                   placeholder="e.g. Received from supplier">
+          </div>
+
+        </div>
+
+        <div class="modal-footer border-0 px-4 pb-3 pt-2">
+          <button type="button" class="btn btn-outline-secondary"
+                  data-bs-dismiss="modal">
+            <i class="bi bi-x me-1"></i>Cancel
+          </button>
+          <button type="submit" class="btn btn-success px-4">
+            <i class="bi bi-plus-circle me-1"></i>Add to Stock
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('stockInModal').addEventListener('show.bs.modal', function(e) {
+  const btn  = e.relatedTarget;
+  document.getElementById('stockInForm').action =
+      '/inventory/items/' + btn.dataset.itemId + '/stock-in/';
+  document.getElementById('modalItemName').textContent  = btn.dataset.itemName;
+  document.getElementById('modalCurrentQty').textContent =
+      btn.dataset.itemQty + ' ' + btn.dataset.itemUnit;
+  document.getElementById('modalQtyInput').value = 1;
+});
+
+function adjustQty(delta) {
+  const inp = document.getElementById('modalQtyInput');
+  inp.value = Math.max(1, (parseInt(inp.value) || 1) + delta);
+}
+function setQty(n) {
+  document.getElementById('modalQtyInput').value = n;
+  document.getElementById('modalQtyInput').focus();
+}
+</script>
+
 {% endblock %}

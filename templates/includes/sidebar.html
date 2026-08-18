@@ -80,6 +80,140 @@
       <li><a href="{% url 'inventory:barcode_scanner' %}" class="nav-link {% if 'scanner' in request.path %}active{% endif %}">
         <i class="bi bi-qr-code-scan" aria-hidden="true"></i><span>{% trans "QR / Barcode Scanner" %}</span>
       </a></li>
+
+      <!-- ══ Project Objectives (10 Steps) ══ -->
+      <li class="nav-item">
+        <button class="nav-link w-100 text-start border-0 bg-transparent d-flex align-items-center gap-2"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#objectivesCollapse"
+                aria-expanded="false"
+                aria-controls="objectivesCollapse"
+                style="padding-left:1rem;">
+          <i class="bi bi-list-check" aria-hidden="true"></i>
+          <span style="flex:1;">{% trans "Objectives" %}</span>
+          <span class="badge rounded-pill" style="background:#16a34a;font-size:.6rem;">10/10</span>
+          <i class="bi bi-chevron-down obj-chevron" style="font-size:.6rem;opacity:.6;transition:transform .2s;"></i>
+        </button>
+
+        <div class="collapse" id="objectivesCollapse">
+          <ul class="nav flex-column" style="padding-left:.5rem;margin-top:.15rem;">
+
+            <!-- 1: Login & User Roles -->
+            <li>
+              <a href="{% url 'accounts:user_list' %}"
+                 class="nav-link d-flex align-items-center gap-2 py-1"
+                 style="font-size:.78rem;padding-left:1.2rem;"
+                 title="Login & User Role Management">
+                <span class="badge bg-success" style="font-size:.55rem;min-width:18px;">✓</span>
+                <span class="text-truncate">1. Login &amp; User Roles</span>
+              </a>
+            </li>
+
+            <!-- 2: Inventory Management -->
+            <li>
+              <a href="{% url 'inventory:item_list' %}"
+                 class="nav-link d-flex align-items-center gap-2 py-1"
+                 style="font-size:.78rem;padding-left:1.2rem;"
+                 title="Inventory Management — Stock IN / OUT">
+                <span class="badge bg-success" style="font-size:.55rem;min-width:18px;">✓</span>
+                <span class="text-truncate">2. Inventory Management</span>
+              </a>
+            </li>
+
+            <!-- 3: Asset Management -->
+            <li>
+              <a href="{% url 'assets:asset_list' %}"
+                 class="nav-link d-flex align-items-center gap-2 py-1"
+                 style="font-size:.78rem;padding-left:1.2rem;"
+                 title="Asset Registration & Tracking">
+                <span class="badge bg-success" style="font-size:.55rem;min-width:18px;">✓</span>
+                <span class="text-truncate">3. Asset Management</span>
+              </a>
+            </li>
+
+            <!-- 4: Location Management -->
+            <li>
+              <a href="{% url 'inventory:location_list' %}"
+                 class="nav-link d-flex align-items-center gap-2 py-1"
+                 style="font-size:.78rem;padding-left:1.2rem;"
+                 title="Location Management for Assets">
+                <span class="badge bg-success" style="font-size:.55rem;min-width:18px;">✓</span>
+                <span class="text-truncate">4. Location Management</span>
+              </a>
+            </li>
+
+            <!-- 5: Asset Transfer System -->
+            <li>
+              <a href="{% url 'assets:transfer_list' %}"
+                 class="nav-link d-flex align-items-center gap-2 py-1"
+                 style="font-size:.78rem;padding-left:1.2rem;"
+                 title="Asset Transfer System">
+                <span class="badge bg-success" style="font-size:.55rem;min-width:18px;">✓</span>
+                <span class="text-truncate">5. Asset Transfer</span>
+              </a>
+            </li>
+
+            <!-- 6: Maintenance & Repair -->
+            <li>
+              <a href="{% url 'assets:maintenance_list' %}"
+                 class="nav-link d-flex align-items-center gap-2 py-1"
+                 style="font-size:.78rem;padding-left:1.2rem;"
+                 title="Maintenance & Repair Tracking">
+                <span class="badge bg-success" style="font-size:.55rem;min-width:18px;">✓</span>
+                <span class="text-truncate">6. Maintenance &amp; Repair</span>
+              </a>
+            </li>
+
+            <!-- 7: Asset Lifecycle (Disposal + Audit) -->
+            <li>
+              <a href="{% url 'assets:disposal_list' %}"
+                 class="nav-link d-flex align-items-center gap-2 py-1"
+                 style="font-size:.78rem;padding-left:1.2rem;"
+                 title="Asset Lifecycle — Disposal & Audit">
+                <span class="badge bg-success" style="font-size:.55rem;min-width:18px;">✓</span>
+                <span class="text-truncate">7. Lifecycle Management</span>
+              </a>
+            </li>
+
+            <!-- 8: Search & Filter (Stock Movements as representative) -->
+            <li>
+              <a href="{% url 'stock:movement_list' %}"
+                 class="nav-link d-flex align-items-center gap-2 py-1"
+                 style="font-size:.78rem;padding-left:1.2rem;"
+                 title="Search & Filter System">
+                <span class="badge bg-success" style="font-size:.55rem;min-width:18px;">✓</span>
+                <span class="text-truncate">8. Search &amp; Filter</span>
+              </a>
+            </li>
+
+            <!-- 9: Report Dashboard -->
+            <li>
+              <a href="{% url 'reports:index' %}"
+                 class="nav-link d-flex align-items-center gap-2 py-1"
+                 style="font-size:.78rem;padding-left:1.2rem;"
+                 title="Report Dashboard — Inventory & Asset">
+                <span class="badge bg-success" style="font-size:.55rem;min-width:18px;">✓</span>
+                <span class="text-truncate">9. Report Dashboard</span>
+              </a>
+            </li>
+
+            <!-- 10: Barcode / QR Code -->
+            <li>
+              <a href="{% url 'inventory:barcode_scanner' %}"
+                 class="nav-link d-flex align-items-center gap-2 py-1"
+                 style="font-size:.78rem;padding-left:1.2rem;"
+                 title="Barcode / QR Code Integration">
+                <span class="badge bg-success" style="font-size:.55rem;min-width:18px;">✓</span>
+                <span class="text-truncate">10. Barcode / QR Code</span>
+              </a>
+            </li>
+
+          </ul>
+        </div><!-- /objectivesCollapse -->
+      </li>
+      <!-- ══ End Objectives ══ -->
+
     </ul>
 
     {% if user.is_super_admin or user.is_admin_or_above %}
@@ -96,6 +230,19 @@
     {% endif %}
 
   </nav>
+
+  <!-- Objectives chevron animation -->
+  <script>
+    (function () {
+      var el = document.getElementById('objectivesCollapse');
+      if (!el) return;
+      var btn = el.previousElementSibling;
+      var chevron = btn ? btn.querySelector('.obj-chevron') : null;
+      if (!chevron) return;
+      el.addEventListener('show.bs.collapse',  function () { chevron.style.transform = 'rotate(180deg)'; });
+      el.addEventListener('hide.bs.collapse',  function () { chevron.style.transform = 'rotate(0deg)';   });
+    })();
+  </script>
 
   <!-- Sidebar footer — user pill -->
   <div class="sidebar-footer">

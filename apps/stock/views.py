@@ -243,6 +243,7 @@ def movement_delete(request, pk):
     Delete a stock movement record and reverse its effect on item.current_qty.
     Requires Admin role — preserving audit trail is the default.
     """
+    from django.db.models import ProtectedError
     movement = get_object_or_404(
         StockMovement.objects.select_related('item'), pk=pk
     )
@@ -254,12 +255,12 @@ def movement_delete(request, pk):
 
         # Reverse the quantity effect
         if mtype in StockMovement.INCREASE_TYPES:
-            item.current_qty -= qty
+            item.current_qty = max(0, item.current_qty - qty)
         elif mtype in StockMovement.DECREASE_TYPES:
             item.current_qty += qty
         elif mtype == 'Adjustment':
             prior = (movement.qty_after or qty) - qty
-            item.current_qty = prior
+            item.current_qty = max(0, prior)
         elif mtype == 'Transfer':
             item.current_qty += qty
 
@@ -272,12 +273,15 @@ def movement_delete(request, pk):
                 item=item, status=LowStockAlert.STATUS_NEW
             ).update(status=LowStockAlert.STATUS_RESOLVED, resolved_at=timezone.now())
 
-        movement_id = movement.pk
-        movement.delete()
-        messages.success(
-            request,
-            f'Movement #{movement_id} deleted. {item.item_name} quantity adjusted to {item.current_qty}.'
-        )
+        try:
+            movement_id = movement.pk
+            movement.delete()
+            messages.success(
+                request,
+                f'Movement #{movement_id} deleted. {item.item_name} quantity adjusted to {item.current_qty}.'
+            )
+        except ProtectedError:
+            messages.error(request, f'Movement #{movement.pk} cannot be deleted — it is referenced by other records.')
         return redirect('stock:movement_list')
 
     return render(request, 'stock/movement_confirm_delete.html', {

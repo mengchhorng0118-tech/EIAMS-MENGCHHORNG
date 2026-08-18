@@ -6,7 +6,7 @@ Class-Based Views for the complete transfer CRUD + workflow.
 All business logic is delegated to services.py.
 """
 
-from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
@@ -17,13 +17,14 @@ from django.urls import reverse_lazy
 from django.utils import timezone
 from django.views import View
 from django.views.generic import (
-    ListView, CreateView, UpdateView, DetailView, DeleteView, TemplateView
+    ListView, CreateView, UpdateView, DetailView, DeleteView,
 )
 from .forms import (
     AssetForm,
     AssetTransferForm, AssetTransferUpdateForm, TransferFilterForm,
     TransferApproveForm, TransferRejectForm,
     TransferCompleteForm, TransferCancelForm,
+    MaintenanceForm, DisposalForm, AuditForm,
 )
 from .models import Asset, AssetTransfer
 from . import services
@@ -193,8 +194,20 @@ class TransferDeleteView(LoginRequiredMixin, DeleteView):
         return ctx
 
     def form_valid(self, form):
-        messages.success(self.request, f"Transfer {self.object.transfer_number} deleted.")
-        return super().form_valid(form)
+        from django.db.models import ProtectedError
+        transfer = self.object
+        try:
+            num = transfer.transfer_number
+            # Delete history first (CASCADE), then transfer
+            transfer.history.all().delete()
+            transfer.delete()
+            messages.success(self.request, f"Transfer {num} deleted.")
+            return redirect(self.success_url)
+        except ProtectedError:
+            messages.error(self.request,
+                f'Cannot delete transfer {transfer.transfer_number} — '
+                'the linked asset is protected. Cancel the transfer instead.')
+            return redirect('assets:transfer_detail', pk=transfer.pk)
 
 
 # ─────────────────────────────────────────────────────────────
@@ -306,19 +319,40 @@ class AssetListView(LoginRequiredMixin, ListView):
     paginate_by         = 15
 
     def get_queryset(self):
-        qs = Asset.objects.select_related('category', 'location', 'assigned_to').filter(is_active=True)
-        q  = self.request.GET.get('q', '').strip()
+        from apps.inventory.models import Category
+        qs = Asset.objects.select_related(
+            'category', 'location', 'assigned_to', 'supplier'
+        ).filter(is_active=True)
+
+        q          = self.request.GET.get('q', '').strip()
+        status_f   = self.request.GET.get('status', '')
+        cat_f      = self.request.GET.get('category', '')
+
         if q:
             qs = qs.filter(
                 Q(asset_code__icontains=q) |
                 Q(asset_name__icontains=q) |
-                Q(serial_number__icontains=q)
+                Q(serial_number__icontains=q) |
+                Q(barcode__icontains=q)
             )
+        if status_f:
+            qs = qs.filter(asset_status=status_f)
+        if cat_f:
+            qs = qs.filter(category__id=cat_f)
         return qs
 
     def get_context_data(self, **kwargs):
+        from apps.inventory.models import Category
         ctx = super().get_context_data(**kwargs)
-        ctx['page_title'] = 'Assets'
+        ctx['page_title']    = 'Assets'
+        ctx['total']         = self.get_queryset().count()
+        ctx['search_query']  = self.request.GET.get('q', '')
+        ctx['status_filter'] = self.request.GET.get('status', '')
+        ctx['cat_filter']    = self.request.GET.get('category', '')
+        ctx['status_choices'] = Asset.STATUS_CHOICES
+        ctx['categories']    = Category.objects.filter(
+            category_type='Asset', status='Active'
+        ).order_by('category_name')
         return ctx
 
 
@@ -390,6 +424,37 @@ class AssetDeleteView(LoginRequiredMixin, DeleteView):
     template_name = 'assets/asset_confirm_delete.html'
     success_url   = reverse_lazy('assets:asset_list')
 
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['page_title'] = f'Delete Asset: {self.object.asset_name}'
+        return ctx
+
+    def form_valid(self, form):
+        from django.db.models import ProtectedError
+        asset = self.object
+        try:
+            name = asset.asset_name
+            # Soft-delete instead of hard delete if it has history
+            has_history = (
+                asset.asset_transfers.exists() or
+                asset.maintenance_records.exists() or
+                asset.audit_logs.exists() or
+                asset.disposals.exists()
+            )
+            if has_history:
+                asset.is_active = False
+                asset.save(update_fields=['is_active', 'updated_at'])
+                messages.success(self.request, f'Asset "{name}" deactivated (has history — cannot be permanently deleted).')
+                return redirect(self.success_url)
+            asset.delete()
+            messages.success(self.request, f'Asset "{name}" deleted successfully.')
+            return redirect(self.success_url)
+        except ProtectedError:
+            messages.error(self.request, f'Cannot delete "{asset.asset_name}" — it has related records. It has been deactivated instead.')
+            asset.is_active = False
+            asset.save(update_fields=['is_active'])
+            return redirect(self.success_url)
+
 
 # ─────────────────────────────────────────────────────────────
 # MAINTENANCE / DISPOSAL / AUDIT
@@ -408,10 +473,28 @@ class MaintenanceListView(LoginRequiredMixin, ListView):
 class MaintenanceCreateView(LoginRequiredMixin, View):
     def get(self, request):
         from django.shortcuts import render
-        return render(request, 'assets/maintenance_form.html', {'page_title': 'Add Maintenance', 'action': 'Create'})
+        form = MaintenanceForm()
+        return render(request, 'assets/maintenance_form.html', {
+            'form': form,
+            'page_title': 'Add Maintenance',
+            'action': 'Create',
+        })
 
     def post(self, request):
-        return redirect('assets:maintenance_list')
+        from django.shortcuts import render
+        form = MaintenanceForm(request.POST)
+        if form.is_valid():
+            record = form.save(commit=False)
+            record.created_by = request.user
+            record.save()
+            messages.success(request, 'Maintenance record created successfully.')
+            return redirect('assets:maintenance_list')
+        messages.error(request, 'Please correct the errors below.')
+        return render(request, 'assets/maintenance_form.html', {
+            'form': form,
+            'page_title': 'Add Maintenance',
+            'action': 'Create',
+        })
 
 
 class DisposalListView(LoginRequiredMixin, ListView):
@@ -427,10 +510,29 @@ class DisposalListView(LoginRequiredMixin, ListView):
 class DisposalCreateView(LoginRequiredMixin, View):
     def get(self, request):
         from django.shortcuts import render
-        return render(request, 'assets/disposal_form.html', {'page_title': 'Record Disposal', 'action': 'Create'})
+        form = DisposalForm()
+        return render(request, 'assets/disposal_form.html', {
+            'form': form,
+            'page_title': 'Record Disposal',
+            'action': 'Create',
+        })
 
     def post(self, request):
-        return redirect('assets:disposal_list')
+        from django.shortcuts import render
+        form = DisposalForm(request.POST)
+        if form.is_valid():
+            disposal = form.save(commit=False)
+            disposal.disposed_by = request.user
+            disposal.status = 'Pending Approval'
+            disposal.save()
+            messages.success(request, 'Disposal request submitted successfully.')
+            return redirect('assets:disposal_list')
+        messages.error(request, 'Please correct the errors below.')
+        return render(request, 'assets/disposal_form.html', {
+            'form': form,
+            'page_title': 'Record Disposal',
+            'action': 'Create',
+        })
 
 
 class DisposalApproveView(LoginRequiredMixin, View):
@@ -457,10 +559,28 @@ class AuditListView(LoginRequiredMixin, ListView):
 class AuditCreateView(LoginRequiredMixin, View):
     def get(self, request):
         from django.shortcuts import render
-        return render(request, 'assets/audit_form.html', {'page_title': 'Log Audit', 'action': 'Create'})
+        form = AuditForm()
+        return render(request, 'assets/audit_form.html', {
+            'form': form,
+            'page_title': 'Log Audit',
+            'action': 'Create',
+        })
 
     def post(self, request):
-        return redirect('assets:audit_list')
+        from django.shortcuts import render
+        form = AuditForm(request.POST)
+        if form.is_valid():
+            audit = form.save(commit=False)
+            audit.checked_by = request.user
+            audit.save()
+            messages.success(request, 'Audit log created successfully.')
+            return redirect('assets:audit_list')
+        messages.error(request, 'Please correct the errors below.')
+        return render(request, 'assets/audit_form.html', {
+            'form': form,
+            'page_title': 'Log Audit',
+            'action': 'Create',
+        })
 
 
 # ─────────────────────────────────────────────────────────────

@@ -40,6 +40,23 @@
 
 <div class="row g-3">
   <div class="col-lg-4">
+
+    {# ── Product Image ── #}
+    {% with img=item.get_image %}
+    {% if img %}
+    <div class="card mb-3 text-center">
+      <div class="card-body p-3">
+        <img src="{{ img }}" alt="{{ item.item_name }}"
+             class="img-fluid"
+             style="max-height:280px;object-fit:contain;border-radius:8px;">
+        <div class="text-muted mt-2" style="font-size:.72rem;">
+          <i class="bi bi-apple me-1"></i>Official product image
+        </div>
+      </div>
+    </div>
+    {% endif %}
+    {% endwith %}
+
     <div class="card mb-3">
       <div class="card-header"><h6 class="mb-0">{% trans "Item Details" %}</h6></div>
       <div class="card-body">

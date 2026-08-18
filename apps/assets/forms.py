@@ -36,7 +36,7 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from .models import Asset, AssetTransfer
+from .models import Asset, AssetTransfer, MaintenanceRecord, AssetDisposal, AssetAuditLog
 from apps.inventory.models import Location
 
 
@@ -441,3 +441,99 @@ class TransferFilterForm(forms.Form):
             "type":  "date",
         }),
     )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Maintenance / Disposal / Audit Forms
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+class MaintenanceForm(forms.ModelForm):
+    """Form for creating / editing a MaintenanceRecord."""
+
+    class Meta:
+        model = MaintenanceRecord
+        fields = [
+            "asset",
+            "maintenance_type",
+            "maintenance_date",
+            "issue_description",
+            "cost",
+            "performed_by",
+            "status",
+            "remarks",
+        ]
+        widgets = {
+            "asset":             forms.Select(attrs={"class": "form-select"}),
+            "maintenance_type":  forms.Select(attrs={"class": "form-select"}),
+            "maintenance_date":  forms.DateInput(attrs={"class": "form-control", "type": "date"}),
+            "issue_description": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
+            "cost":              forms.NumberInput(attrs={"class": "form-control", "step": "0.01", "min": "0"}),
+            "performed_by":      forms.TextInput(attrs={"class": "form-control"}),
+            "status":            forms.Select(attrs={"class": "form-select"}),
+            "remarks":           forms.Textarea(attrs={"class": "form-control", "rows": 2}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["issue_description"].required = False
+        self.fields["performed_by"].required = False
+        self.fields["remarks"].required = False
+        if not self.instance.pk:
+            self.fields["cost"].initial = Decimal("0.00")
+            self.fields["status"].initial = MaintenanceRecord.STATUS_PENDING
+
+
+class DisposalForm(forms.ModelForm):
+    """Form for creating a new AssetDisposal request."""
+
+    class Meta:
+        model = AssetDisposal
+        fields = [
+            "asset",
+            "disposal_date",
+            "disposal_value",
+            "disposal_reason",
+            "remarks",
+        ]
+        widgets = {
+            "asset":           forms.Select(attrs={"class": "form-select"}),
+            "disposal_date":   forms.DateInput(attrs={"class": "form-control", "type": "date"}),
+            "disposal_value":  forms.NumberInput(attrs={"class": "form-control", "step": "0.01", "min": "0"}),
+            "disposal_reason": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
+            "remarks":         forms.Textarea(attrs={"class": "form-control", "rows": 2}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["remarks"].required = False
+        if not self.instance.pk:
+            self.fields["disposal_value"].initial = Decimal("0.00")
+
+
+class AuditForm(forms.ModelForm):
+    """Form for logging an AssetAuditLog entry."""
+
+    class Meta:
+        model = AssetAuditLog
+        fields = [
+            "asset",
+            "audit_date",
+            "condition_status",
+            "location",
+            "remarks",
+        ]
+        widgets = {
+            "asset":            forms.Select(attrs={"class": "form-select"}),
+            "audit_date":       forms.DateInput(attrs={"class": "form-control", "type": "date"}),
+            "condition_status": forms.Select(attrs={"class": "form-select"}),
+            "location":         forms.Select(attrs={"class": "form-select"}),
+            "remarks":          forms.Textarea(attrs={"class": "form-control", "rows": 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["location"].required = False
+        self.fields["remarks"].required = False
+        from apps.inventory.models import Location as Loc
+        self.fields["location"].queryset = Loc.objects.filter(status="Active").order_by("location_name")

@@ -23,6 +23,7 @@ urlpatterns = [
     path('users/<int:pk>/',   views.user_detail,        name='user_detail'),
     path('users/<int:pk>/update/', views.user_update,   name='user_update'),
     path('users/<int:pk>/delete/', views.user_delete,   name='user_delete'),
+    path('users/<int:pk>/change-password/', views.admin_change_user_password, name='admin_change_user_password'),
 
     # ── Profile & Password URLs ──────────────────────────────────────────
     path('profile/',          views.profile_view,       name='profile'),

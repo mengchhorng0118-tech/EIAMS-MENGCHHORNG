@@ -1,16 +1,17 @@
 {% extends "base.html" %}
-{% block title %}Assets{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Assets" %}{% endblock %}
 {% block content %}
 
 <div class="page-header">
   <div>
-    <h1><i class="bi bi-pc-display me-2 text-primary"></i>Assets</h1>
+    <h1><i class="bi bi-pc-display me-2 text-primary"></i>{% trans "Assets" %}</h1>
     <nav aria-label="breadcrumb"><ol class="breadcrumb">
-      <li class="breadcrumb-item"><a href="{% url 'dashboard:home' %}">Dashboard</a></li>
-      <li class="breadcrumb-item active">Assets</li>
+      <li class="breadcrumb-item"><a href="{% url 'dashboard:home' %}">{% trans "Dashboard" %}</a></li>
+      <li class="breadcrumb-item active">{% trans "Assets" %}</li>
     </ol></nav>
   </div>
-  <a href="{% url 'assets:asset_create' %}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Add Asset</a>
+  <a href="{% url 'assets:asset_create' %}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>{% trans "Add Asset" %}</a>
 </div>
 
 <!-- Filters -->
@@ -18,11 +19,11 @@
   <div class="card-body py-2">
     <form method="get" class="row g-2 align-items-end">
       <div class="col-md-4">
-        <input type="text" name="q" class="form-control form-control-sm" placeholder="Search code, name, serial…" value="{{ search_query }}">
+        <input type="text" name="q" class="form-control form-control-sm" placeholder="{% trans 'Search code, name, serial…' %}" value="{{ search_query }}">
       </div>
       <div class="col-md-2">
         <select name="status" class="form-select form-select-sm">
-          <option value="">All Status</option>
+          <option value="">{% trans "All Status" %}</option>
           {% for val, label in status_choices %}
           <option value="{{ val }}" {% if status_filter == val %}selected{% endif %}>{{ label }}</option>
           {% endfor %}
@@ -30,15 +31,15 @@
       </div>
       <div class="col-md-3">
         <select name="category" class="form-select form-select-sm">
-          <option value="">All Categories</option>
+          <option value="">{% trans "All Categories" %}</option>
           {% for cat in categories %}
           <option value="{{ cat.pk }}" {% if cat_filter == cat.pk|stringformat:"s" %}selected{% endif %}>{{ cat.category_name }}</option>
           {% endfor %}
         </select>
       </div>
       <div class="col-auto">
-        <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-search me-1"></i>Filter</button>
-        <a href="{% url 'assets:asset_list' %}" class="btn btn-outline-secondary btn-sm ms-1">Clear</a>
+        <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-search me-1"></i>{% trans "Filter" %}</button>
+        <a href="{% url 'assets:asset_list' %}" class="btn btn-outline-secondary btn-sm ms-1">{% trans "Clear" %}</a>
       </div>
     </form>
   </div>
@@ -46,40 +47,55 @@
 
 <div class="card">
   <div class="card-header d-flex align-items-center justify-content-between">
-    <h6 class="mb-0">Assets <span class="badge bg-secondary ms-2">{{ total }}</span></h6>
+    <h6 class="mb-0">{% trans "Assets" %} <span class="badge bg-secondary ms-2">{{ total }}</span></h6>
   </div>
   <div class="table-responsive">
     <table class="table table-hover mb-0">
       <thead><tr>
-        <th>Code</th><th>Name</th><th>Category</th><th>Location</th><th>Assigned To</th><th>Status</th><th class="text-end">Actions</th>
+        <th>{% trans "Image" %}</th><th>{% trans "Code" %}</th><th>{% trans "Name" %}</th><th>{% trans "Serial No." %}</th><th>{% trans "Location" %}</th><th>{% trans "Assigned To" %}</th><th>{% trans "Status" %}</th><th class="text-end">{% trans "Actions" %}</th>
       </tr></thead>
       <tbody>
         {% for asset in page_obj %}
         <tr>
+          <td style="width:56px;">
+            {% with img=asset.get_image %}
+            {% if img %}
+              <img src="{{ img }}" alt="{{ asset.asset_name }}"
+                   style="width:48px;height:48px;object-fit:contain;border-radius:6px;
+                          background:#f8f9fa;border:1px solid #e9ecef;">
+            {% else %}
+              <span style="display:inline-flex;align-items:center;justify-content:center;
+                           width:48px;height:48px;background:#f8f9fa;border:1px solid #e9ecef;
+                           border-radius:6px;color:#adb5bd;">
+                <i class="bi bi-phone fs-5"></i>
+              </span>
+            {% endif %}
+            {% endwith %}
+          </td>
           <td><code style="font-size:.8rem;">{{ asset.asset_code }}</code></td>
           <td>
             <a href="{% url 'assets:asset_detail' asset.pk %}" class="fw-semibold text-decoration-none">{{ asset.asset_name }}</a>
-            {% if asset.is_warranty_expiring_soon %}<span class="badge bg-warning text-dark ms-1" style="font-size:.65rem;">Warranty Soon</span>{% endif %}
+            {% if asset.is_warranty_expiring_soon %}<span class="badge bg-warning text-dark ms-1" style="font-size:.65rem;">{% trans "Warranty Soon" %}</span>{% endif %}
           </td>
-          <td style="font-size:.875rem;">{{ asset.category.category_name }}</td>
+          <td style="font-size:.8rem;font-family:monospace;">{{ asset.serial_number|default:"—" }}</td>
           <td style="font-size:.875rem;">{{ asset.location|default:"—" }}</td>
           <td style="font-size:.875rem;">{{ asset.assigned_to.full_name|default:"Unassigned" }}</td>
           <td>
-            {% if asset.asset_status == 'Available' %}<span class="badge bg-success">{{ asset.asset_status }}</span>
-            {% elif asset.asset_status == 'Assigned' %}<span class="badge bg-primary">{{ asset.asset_status }}</span>
-            {% elif asset.asset_status == 'Under Maintenance' %}<span class="badge bg-warning text-dark">{{ asset.asset_status }}</span>
-            {% elif asset.asset_status == 'Disposed' %}<span class="badge bg-secondary">{{ asset.asset_status }}</span>
+            {% if asset.asset_status == 'Available' %}<span class="badge bg-success">{% trans "Available" %}</span>
+            {% elif asset.asset_status == 'Assigned' %}<span class="badge bg-primary">{% trans "Assigned" %}</span>
+            {% elif asset.asset_status == 'Under Maintenance' %}<span class="badge bg-warning text-dark">{% trans "Under Maintenance" %}</span>
+            {% elif asset.asset_status == 'Disposed' %}<span class="badge bg-secondary">{% trans "Disposed" %}</span>
             {% else %}<span class="badge bg-danger">{{ asset.asset_status }}</span>{% endif %}
           </td>
           <td class="text-end">
-            <a href="{% url 'assets:asset_detail' asset.pk %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-eye"></i></a>
-            <a href="{% url 'assets:asset_update' asset.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
-            <a href="{% url 'assets:asset_delete' asset.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash3"></i></a>
+            <a href="{% url 'assets:asset_detail' asset.pk %}" class="btn btn-sm btn-outline-secondary" title="{% trans 'View' %}"><i class="bi bi-eye"></i></a>
+            <a href="{% url 'assets:asset_update' asset.pk %}" class="btn btn-sm btn-outline-primary" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
+            <a href="{% url 'assets:asset_delete' asset.pk %}" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}"><i class="bi bi-trash3"></i></a>
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="7" class="text-center text-muted py-5">
-          <i class="bi bi-pc-display d-block fs-2 mb-2"></i>No assets found.
+        <tr><td colspan="8" class="text-center text-muted py-5">
+          <i class="bi bi-pc-display d-block fs-2 mb-2"></i>{% trans "No assets found." %}
         </td></tr>
         {% endfor %}
       </tbody>

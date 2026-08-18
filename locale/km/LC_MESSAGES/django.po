@@ -30,13 +30,13 @@ msgid "Stock"
 msgstr "ស្តុក"
 
 msgid "Movements"
-msgstr "ចលនាស្តុក"
+msgstr "ចលនា"
 
 msgid "Low Stock Alerts"
-msgstr "ព្រឹត្តិការណ៍ស្តុកទាប"
+msgstr "ការព្រមានស្តុកទាប"
 
 msgid "Assets"
-msgstr "ទ្រព្យសម្បត្តិ"
+msgstr "ទ្រព្យ"
 
 msgid "Transfers"
 msgstr "ការផ្ទេរ"
@@ -48,7 +48,7 @@ msgid "Disposals"
 msgstr "ការបោះចោល"
 
 msgid "Audit Logs"
-msgstr "កំណត់ហេតុពិនិត្យ"
+msgstr "កំណត់ហេតុ"
 
 msgid "Reports"
 msgstr "របាយការណ៍"
@@ -62,6 +62,30 @@ msgstr "ការជូនដំណឹង"
 msgid "Django Admin"
 msgstr "គ្រប់គ្រង Django"
 
+msgid "INVENTORY"
+msgstr "សារពើភ័ណ្ឌ"
+
+msgid "STOCK"
+msgstr "ស្តុក"
+
+msgid "ASSETS"
+msgstr "ទ្រព្យ"
+
+msgid "REPORTS"
+msgstr "របាយការណ៍"
+
+msgid "TOOLS"
+msgstr "ឧបករណ៍"
+
+msgid "ADMINISTRATION"
+msgstr "រដ្ឋបាល"
+
+msgid "Inventory & Assets"
+msgstr "សារពើភ័ណ្ឌ និង ទ្រព្យ"
+
+msgid "Objectives"
+msgstr "គោលដៅ"
+
 # ── Auth ─────────────────────────────────────────────────
 msgid "Sign In"
 msgstr "ចូលប្រព័ន្ធ"
@@ -70,6 +94,9 @@ msgid "Sign Out"
 msgstr "ចេញពីប្រព័ន្ធ"
 
 msgid "Welcome Back"
+msgstr "សូមស្វាគមន៍មកវិញ"
+
+msgid "Welcome back"
 msgstr "សូមស្វាគមន៍មកវិញ"
 
 msgid "Sign in to EIAMS to continue"
@@ -99,6 +126,27 @@ msgstr "លេខសម្ងាត់ថ្មី"
 msgid "Confirm New Password"
 msgstr "បញ្ជាក់លេខសម្ងាត់ថ្មី"
 
+msgid "Edit Profile"
+msgstr "កែប្រែប្រវត្តិរូប"
+
+msgid "Security"
+msgstr "សុវត្ថិភាព"
+
+msgid "Account Actions"
+msgstr "សកម្មភាពគណនី"
+
+msgid "Update Password"
+msgstr "ធ្វើបច្ចុប្បន្នភាពលេខសម្ងាត់"
+
+msgid "Resign from System"
+msgstr "លាឈប់ពីប្រព័ន្ធ"
+
+msgid "Go to Resign Page"
+msgstr "ទៅទំព័រលាឈប់"
+
+msgid "Permanent Account Removal"
+msgstr "លុបគណនីជាអចិន្ត្រៃ"
+
 # ── Dashboard ─────────────────────────────────────────────
 msgid "Total Items"
 msgstr "ទំនិញសរុប"
@@ -109,17 +157,26 @@ msgstr "ទ្រព្យសម្បត្តិសរុប"
 msgid "Inventory Value"
 msgstr "តម្លៃសារពើភ័ណ្ឌ"
 
+msgid "Inv Value"
+msgstr "តម្លៃស្តុក"
+
 msgid "Under Maintenance"
 msgstr "កំពុងថែទាំ"
 
 msgid "Recent Stock Movements"
 msgstr "ចលនាស្តុកថ្មីៗ"
 
+msgid "Recent Movements"
+msgstr "ចលនាថ្មីៗ"
+
 msgid "Low Stock Items"
 msgstr "ទំនិញស្តុកទាប"
 
 msgid "Asset Status Overview"
 msgstr "ទិដ្ឋភាពស្ថានភាពទ្រព្យ"
+
+msgid "Asset Status"
+msgstr "ស្ថានភាពទ្រព្យ"
 
 msgid "Available"
 msgstr "អាចប្រើបាន"
@@ -130,8 +187,50 @@ msgstr "បានប្រគល់ឱ្យ"
 msgid "View All"
 msgstr "មើលទាំងអស់"
 
+msgid "View all"
+msgstr "មើលទាំងអស់"
+
 msgid "All stock levels OK"
 msgstr "ស្តុកទំនិញទាំងអស់គ្រប់គ្រាន់"
+
+msgid "All healthy"
+msgstr "ស្តុកគ្រប់គ្រាន់"
+
+msgid "Quick Actions"
+msgstr "សកម្មភាពរហ័ស"
+
+msgid "Stock Move"
+msgstr "ចលនាស្តុក"
+
+msgid "QR / Barcode Scanner"
+msgstr "ស្កែន QR / បាកូដ"
+
+msgid "Stock Activity — Last 7 Days"
+msgstr "សកម្មភាពស្តុក — ៧ ថ្ងៃចុងក្រោយ"
+
+msgid "Top Suppliers"
+msgstr "អ្នកផ្គត់ផ្គង់ចម្បង"
+
+msgid "Warranty Expiring"
+msgstr "ការធានាកំពុងផុតកំណត់"
+
+msgid "60 days"
+msgstr "៦០ ថ្ងៃ"
+
+msgid "Latest 8"
+msgstr "ចុងក្រោយ ៨"
+
+msgid "None expiring"
+msgstr "គ្មានផុតកំណត់"
+
+msgid "No suppliers"
+msgstr "គ្មានអ្នកផ្គត់ផ្គង់"
+
+msgid "No movements"
+msgstr "គ្មានចលនា"
+
+msgid "No assets"
+msgstr "គ្មានទ្រព្យ"
 
 # ── Common Actions ────────────────────────────────────────
 msgid "Create"
@@ -145,6 +244,12 @@ msgstr "លុប"
 
 msgid "Save"
 msgstr "រក្សាទុក"
+
+msgid "Save Changes"
+msgstr "រក្សាទុកការផ្លាស់ប្ដូរ"
+
+msgid "Reset"
+msgstr "កំណត់ឡើងវិញ"
 
 msgid "Cancel"
 msgstr "បោះបង់"
@@ -160,6 +265,9 @@ msgstr "សម្អាត"
 
 msgid "Back"
 msgstr "ត្រឡប់ក្រោយ"
+
+msgid "Back to Dashboard"
+msgstr "ត្រឡប់ទៅផ្ទាំងគ្រប់គ្រង"
 
 msgid "Edit"
 msgstr "កែប្រែ"
@@ -185,11 +293,11 @@ msgstr "ដោះស្រាយ"
 msgid "Record"
 msgstr "កត់ត្រា"
 
-msgid "Save Changes"
-msgstr "រក្សាទុកការផ្លាស់ប្ដូរ"
-
 msgid "Actions"
 msgstr "សកម្មភាព"
+
+msgid "All"
+msgstr "ទាំងអស់"
 
 # ── Status ────────────────────────────────────────────────
 msgid "Active"
@@ -207,6 +315,9 @@ msgstr "ស្ថានភាពទាំងអស់"
 msgid "Pending Approval"
 msgstr "រង់ចាំការអនុម័ត"
 
+msgid "Pending"
+msgstr "រង់ចាំ"
+
 msgid "Approved"
 msgstr "បានអនុម័ត"
 
@@ -219,15 +330,39 @@ msgstr "បានដោះស្រាយ"
 msgid "New"
 msgstr "ថ្មី"
 
+msgid "In Transit"
+msgstr "កំពុងផ្ទេរ"
+
+msgid "Completed"
+msgstr "បានបញ្ចប់"
+
+msgid "Cancelled"
+msgstr "បានបោះបង់"
+
+msgid "Disposed"
+msgstr "បានបោះចោល"
+
 # ── Inventory ─────────────────────────────────────────────
+msgid "Inventory Items"
+msgstr "ទំនិញក្នុងស្តុក"
+
 msgid "Item Code"
 msgstr "លេខកូដទំនិញ"
 
 msgid "Item Name"
 msgstr "ឈ្មោះទំនិញ"
 
+msgid "Item"
+msgstr "ទំនិញ"
+
 msgid "Category"
 msgstr "ប្រភេទ"
+
+msgid "All Categories"
+msgstr "ប្រភេទទាំងអស់"
+
+msgid "All Types"
+msgstr "ប្រភេទទាំងអស់"
 
 msgid "Supplier"
 msgstr "អ្នកផ្គត់ផ្គង់"
@@ -256,6 +391,42 @@ msgstr "បាកូដ"
 msgid "Description"
 msgstr "ការពិពណ៌នា"
 
+msgid "Code"
+msgstr "លេខកូដ"
+
+msgid "Name"
+msgstr "ឈ្មោះ"
+
+msgid "Type"
+msgstr "ប្រភេទ"
+
+msgid "Qty"
+msgstr "ចំនួន"
+
+msgid "Min"
+msgstr "អប្បបរមា"
+
+msgid "Price"
+msgstr "តម្លៃ"
+
+msgid "Add Item"
+msgstr "បន្ថែមទំនិញ"
+
+msgid "Add Category"
+msgstr "បន្ថែមប្រភេទ"
+
+msgid "Add Location"
+msgstr "បន្ថែមទីតាំង"
+
+msgid "Add Supplier"
+msgstr "បន្ថែមអ្នកផ្គត់ផ្គង់"
+
+msgid "No items found."
+msgstr "រកមិនឃើញទំនិញ។"
+
+msgid "Code / Name"
+msgstr "លេខកូដ / ឈ្មោះ"
+
 # ── Assets ────────────────────────────────────────────────
 msgid "Asset Code"
 msgstr "លេខកូដទ្រព្យ"
@@ -266,6 +437,9 @@ msgstr "ឈ្មោះទ្រព្យ"
 msgid "Serial Number"
 msgstr "លេខស៊េរី"
 
+msgid "Serial No."
+msgstr "លេខស៊េរី"
+
 msgid "Purchase Date"
 msgstr "កាលបរិច្ឆេទទិញ"
 
@@ -273,7 +447,10 @@ msgid "Warranty Expiry"
 msgstr "ផុតកំណត់ធានា"
 
 msgid "Assigned To"
-msgstr "បានប្រគល់ឱ្យ"
+msgstr "ប្រគល់ឱ្យ"
+
+msgid "Unassigned"
+msgstr "មិនទាន់ប្រគល់"
 
 msgid "Location"
 msgstr "ទីតាំង"
@@ -293,10 +470,53 @@ msgstr "អន់"
 msgid "Missing"
 msgstr "បាត់"
 
-msgid "Disposed"
-msgstr "បានបោះចោល"
+msgid "Image"
+msgstr "រូបភាព"
+
+msgid "Add Asset"
+msgstr "បន្ថែមទ្រព្យ"
+
+msgid "No assets found."
+msgstr "រកមិនឃើញទ្រព្យ។"
+
+msgid "Warranty Soon"
+msgstr "ការធានាផុតឆាប់ៗ"
+
+# ── Asset Transfers ───────────────────────────────────────
+msgid "Asset Transfers"
+msgstr "ការផ្ទេរទ្រព្យ"
+
+msgid "New Transfer"
+msgstr "ការផ្ទេរថ្មី"
+
+msgid "Transfer"
+msgstr "ការផ្ទេរ"
+
+msgid "Transfer No"
+msgstr "លេខការផ្ទេរ"
+
+msgid "Transfer Date"
+msgstr "កាលបរិច្ឆេទផ្ទេរ"
+
+msgid "From"
+msgstr "ពី"
+
+msgid "To"
+msgstr "ទៅ"
+
+msgid "Requested By"
+msgstr "ស្នើដោយ"
+
+msgid "Approved By"
+msgstr "អនុម័តដោយ"
+
+msgid "No transfers found."
+msgstr "រកមិនឃើញការផ្ទេរ។"
 
 # ── Stock ─────────────────────────────────────────────────
+msgid "Stock Movements"
+msgstr "ចលនាស្តុក"
+
 msgid "Movement Type"
 msgstr "ប្រភេទចលនា"
 
@@ -304,6 +524,9 @@ msgid "Quantity"
 msgstr "បរិមាណ"
 
 msgid "Reference Number"
+msgstr "លេខយោង"
+
+msgid "Reference"
 msgstr "លេខយោង"
 
 msgid "Reason"
@@ -324,7 +547,34 @@ msgstr "កែតម្រូវ"
 msgid "Record Movement"
 msgstr "កត់ត្រាចលនា"
 
+msgid "View Alerts"
+msgstr "មើលការព្រមាន"
+
+msgid "After"
+msgstr "បន្ទាប់"
+
+msgid "Date"
+msgstr "កាលបរិច្ឆេទ"
+
+msgid "By"
+msgstr "ដោយ"
+
+msgid "Alerts"
+msgstr "ការព្រមាន"
+
+msgid "No stock movements recorded."
+msgstr "មិនមានការកត់ត្រាចលនាស្តុក។"
+
+msgid "Search item, reference…"
+msgstr "ស្វែងរកទំនិញ, លេខយោង…"
+
+msgid "Search code, name, serial…"
+msgstr "ស្វែងរកលេខកូដ, ឈ្មោះ, លេខស៊េរី…"
+
 # ── User Management ───────────────────────────────────────
+msgid "User List"
+msgstr "បញ្ជីអ្នកប្រើ"
+
 msgid "Full Name"
 msgstr "នាមពេញ"
 
@@ -333,6 +583,9 @@ msgstr "អ៊ីម៉ែល"
 
 msgid "Role"
 msgstr "តួនាទី"
+
+msgid "All Roles"
+msgstr "តួនាទីទាំងអស់"
 
 msgid "Department"
 msgstr "នាយកដ្ឋាន"
@@ -358,6 +611,12 @@ msgstr "បន្ថែមអ្នកប្រើ"
 msgid "User Management"
 msgstr "គ្រប់គ្រងអ្នកប្រើ"
 
+msgid "Active Users"
+msgstr "អ្នកប្រើសកម្ម"
+
+msgid "Inactive Users"
+msgstr "អ្នកប្រើអសកម្ម"
+
 # ── Reports ───────────────────────────────────────────────
 msgid "Inventory Report"
 msgstr "របាយការណ៍សារពើភ័ណ្ឌ"
@@ -376,6 +635,15 @@ msgstr "បង្កើតនៅ"
 
 msgid "Total Value"
 msgstr "តម្លៃសរុប"
+
+msgid "Export Excel"
+msgstr "នាំចេញ Excel"
+
+msgid "Export CSV"
+msgstr "នាំចេញ CSV"
+
+msgid "Export PDF"
+msgstr "នាំចេញ PDF"
 
 # ── Messages ──────────────────────────────────────────────
 msgid "saved successfully"
